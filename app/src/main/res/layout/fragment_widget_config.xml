@@ -1,0 +1,289 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#0F0C1B"
+    android:padding="16dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Widget Customization"
+            android:textColor="#00F2FE"
+            android:textSize="22sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="12dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Live Preview"
+            android:textColor="#FF1493"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="6dp" />
+
+        <FrameLayout
+            android:id="@+id/preview_container"
+            android:layout_width="match_parent"
+            android:layout_height="140dp"
+            android:background="#1A1528"
+            android:padding="12dp"
+            android:layout_marginBottom="20dp">
+
+            <LinearLayout
+                android:id="@+id/preview_card"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical"
+                android:padding="16dp"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:id="@+id/tv_preview_title"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="TVTime Live Widget"
+                    android:textColor="#FFFF1493"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tv_preview_subtitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Glassmorphism Preview Card"
+                    android:textColor="#DDFFFFFF"
+                    android:textSize="13sp"
+                    android:layout_marginTop="4dp" />
+            </LinearLayout>
+        </FrameLayout>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Glass Presets"
+            android:textColor="#00F2FE"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp" />
+
+        <RadioGroup
+            android:id="@+id/rg_glass_presets"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginBottom="16dp">
+
+            <RadioButton
+                android:id="@+id/rb_preset_light"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Frosted Glass (Light)"
+                android:textColor="#FFFFFF" />
+
+            <RadioButton
+                android:id="@+id/rb_preset_dark"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Dark Obsidian Glass"
+                android:textColor="#FFFFFF" />
+
+            <RadioButton
+                android:id="@+id/rb_preset_tinted"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Tinted Neon Glass"
+                android:textColor="#FFFFFF" />
+
+            <RadioButton
+                android:id="@+id/rb_preset_liquid"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Liquid Blur Glass"
+                android:textColor="#FFFFFF" />
+
+            <RadioButton
+                android:id="@+id/rb_preset_liquid_noblur"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Liquid Glass (No Blur)"
+                android:textColor="#FF1493"
+                android:textStyle="bold" />
+        </RadioGroup>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Colors, Accent &amp; Stroke"
+            android:textColor="#00F2FE"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="10dp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="10dp">
+
+            <Button
+                android:id="@+id/btn_pick_accent"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:text="🎨 Accent Color"
+                android:textColor="#FFFFFF"
+                android:backgroundTint="#FF1493"
+                android:layout_marginEnd="8dp" />
+
+            <View
+                android:id="@+id/view_accent_preview"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:background="#FFFF1493" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="10dp">
+
+            <Button
+                android:id="@+id/btn_pick_stroke"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:text="✏️ Stroke (Border) Color"
+                android:textColor="#FFFFFF"
+                android:backgroundTint="#00F2FE"
+                android:layout_marginEnd="8dp" />
+
+            <View
+                android:id="@+id/view_stroke_preview"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:background="#3303DAC5" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/tv_stroke_width_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Stroke Thickness: 2dp"
+            android:textColor="#FFFFFF"
+            android:textStyle="bold"
+            android:layout_marginTop="6dp" />
+
+        <SeekBar
+            android:id="@+id/seek_stroke_width"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:max="10"
+            android:progress="2"
+            android:layout_marginBottom="12dp" />
+
+        <TextView
+            android:id="@+id/tv_corner_radius_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Corner Radius: 16dp"
+            android:textColor="#FFFFFF"
+            android:textStyle="bold" />
+
+        <SeekBar
+            android:id="@+id/seek_corner_radius"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:max="40"
+            android:progress="16"
+            android:layout_marginBottom="16dp" />
+
+        <TextView
+            android:id="@+id/tv_bg_blur_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Background Opacity / Alpha: 80%"
+            android:textColor="#FFFFFF"
+            android:textStyle="bold" />
+
+        <SeekBar
+            android:id="@+id/seek_bg_blur"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:max="100"
+            android:progress="80"
+            android:layout_marginBottom="12dp" />
+
+        <TextView
+            android:id="@+id/tv_gaussian_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Gaussian Blur Radius: 12px"
+            android:textColor="#FFFFFF"
+            android:textStyle="bold" />
+
+        <SeekBar
+            android:id="@+id/seek_gaussian_blur"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:max="50"
+            android:progress="12"
+            android:layout_marginBottom="12dp" />
+
+        <TextView
+            android:id="@+id/tv_layer_blur_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Layer Softening: 8px"
+            android:textColor="#FFFFFF"
+            android:textStyle="bold" />
+
+        <SeekBar
+            android:id="@+id/seek_layer_blur"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:max="30"
+            android:progress="8"
+            android:layout_marginBottom="16dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Background ARGB Hex"
+            android:textColor="#FFFFFF"
+            android:textStyle="bold" />
+
+        <EditText
+            android:id="@+id/et_bg_hex"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="#CC1E1E1E"
+            android:textColor="#FFFFFF"
+            android:textColorHint="#88FFFFFF"
+            android:background="#22FFFFFF"
+            android:padding="12dp"
+            android:layout_marginBottom="16dp" />
+
+        <Button
+            android:id="@+id/btn_save_config"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:text="SAVE &amp; APPLY TO WIDGET"
+            android:textColor="#0F0C1B"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:backgroundTint="#00F2FE"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="24dp" />
+
+    </LinearLayout>
+</ScrollView>
