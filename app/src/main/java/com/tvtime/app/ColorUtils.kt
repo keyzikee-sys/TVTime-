@@ -26,8 +26,8 @@ object ColorUtils {
                 val v = s.toIntOrNull(16) ?: return null
                 (0xFF shl 24) or v
             }
-            8 -> { // #AARRGGBB
-                s.toIntOrNull(16)
+            8 -> { // #AARRGGBB (may exceed Int range, so parse as Long then widen)
+                s.toLongOrNull(16)?.toInt()
             }
             else -> null
         }

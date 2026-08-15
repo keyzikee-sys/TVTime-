@@ -6,6 +6,7 @@ import android.graphics.LinearGradient
 import android.graphics.Paint
 import android.graphics.RectF
 import android.graphics.RenderEffect
+import android.graphics.RenderNode
 import android.graphics.Shader
 import android.os.Build
 
@@ -79,17 +80,23 @@ object GlassBitmapRenderer {
         }
 
         if (useBlur) {
-            canvas.setRenderEffect(
+            // Canvas.setRenderEffect is unavailable on this toolchain; blur via a RenderNode
+            // (API 29+) and draw it back onto the bitmap canvas.
+            val renderNode = RenderNode("glassBlur")
+            renderNode.setPosition(0, 0, widthPx, heightPx)
+            val rnCanvas = renderNode.beginRecording()
+            rnCanvas.drawRoundRect(rect, rx, rx, fillPaint)
+            renderNode.endRecording()
+            renderNode.setRenderEffect(
                 RenderEffect.createBlurEffect(
                     gaussianBlurRadius.toFloat(),
                     gaussianBlurRadius.toFloat(),
                     Shader.TileMode.CLAMP
                 )
             )
-        }
-        canvas.drawRoundRect(rect, rx, rx, fillPaint)
-        if (useBlur) {
-            canvas.setRenderEffect(null)
+            canvas.drawRenderNode(renderNode)
+        } else {
+            canvas.drawRoundRect(rect, rx, rx, fillPaint)
         }
 
         if (gradient && !useBlur) {
