@@ -228,7 +228,7 @@ class WidgetConfigFragment : Fragment() {
                 currentAccentHex = argbHex
                 updateColorView(viewAccentPreview, argbHex)
                 refreshLivePreview()
-            }
+            }.show()
         }
 
         btnPickStroke?.setOnClickListener {
@@ -236,7 +236,7 @@ class WidgetConfigFragment : Fragment() {
                 currentStrokeHex = argbHex
                 updateColorView(viewStrokePreview, argbHex)
                 refreshLivePreview()
-            }
+            }.show()
         }
 
         btnSave?.setOnClickListener {
