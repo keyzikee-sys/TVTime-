@@ -30,6 +30,11 @@
                 android:resource="@xml/tvtime_widget_info" />
         </receiver>
 
+        <activity
+            android:name=".WidgetConfigureActivity"
+            android:exported="true"
+            android:theme="@style/AppTheme" />
+
     </application>
 
 </manifest>

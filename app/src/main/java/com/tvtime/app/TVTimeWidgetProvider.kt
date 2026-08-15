@@ -6,7 +6,6 @@ import android.appwidget.AppWidgetProvider
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
 import android.widget.RemoteViews
 
 class TVTimeWidgetProvider : AppWidgetProvider() {
@@ -63,6 +62,7 @@ class TVTimeWidgetProvider : AppWidgetProvider() {
             cornerRadiusDp = prefs.cornerRadius,
             borderThicknessDp = prefs.borderThickness,
             alphaPercent = prefs.bgBlurOpacity,
+            gaussianBlurRadius = prefs.gaussianBlurRadius,
             density = density,
             gradient = isLiquid
         )
@@ -74,6 +74,10 @@ class TVTimeWidgetProvider : AppWidgetProvider() {
         views.setTextColor(R.id.tv_widget_title_p2, accent)
 
         views.setDisplayedChild(R.id.view_flipper, prefs.currentPage)
+
+        val service = StreamingServices.byPackage(prefs.selectedServicePackage)
+            ?: StreamingServices.default()
+        views.setTextViewText(R.id.btn_open_tubi, "Open ${service.name}")
 
         val nextPendingIntent = PendingIntent.getBroadcast(
             context, appWidgetId,
@@ -89,14 +93,7 @@ class TVTimeWidgetProvider : AppWidgetProvider() {
         )
         views.setOnClickPendingIntent(R.id.btn_prev_page, prevPendingIntent)
 
-        var launchIntent = context.packageManager.getLaunchIntentForPackage("com.tubitv")
-        if (launchIntent == null) {
-            launchIntent = Intent(
-                Intent.ACTION_VIEW,
-                Uri.parse("https://play.google.com/store/apps/details?id=com.tubitv")
-            )
-        }
-        launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        val launchIntent = StreamingServices.createLaunchIntent(context, service)
         val tubiPendingIntent = PendingIntent.getActivity(
             context, appWidgetId, launchIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE

@@ -5,6 +5,24 @@ android {
     compileSdk 31
     namespace 'com.tvtime.app'
 
+    def keystorePropsFile = rootProject.file("local.properties")
+    def keystoreProps = new Properties()
+    if (keystorePropsFile.exists()) {
+        keystoreProps.load(new FileInputStream(keystorePropsFile))
+    }
+    def hasReleaseKey = keystoreProps.containsKey("RELEASE_STORE_FILE")
+
+    if (hasReleaseKey) {
+        signingConfigs {
+            release {
+                storeFile file(keystoreProps["RELEASE_STORE_FILE"])
+                storePassword keystoreProps["RELEASE_STORE_PASSWORD"]
+                keyAlias keystoreProps["RELEASE_KEY_ALIAS"]
+                keyPassword keystoreProps["RELEASE_KEY_PASSWORD"]
+            }
+        }
+    }
+
     defaultConfig {
         applicationId "com.tvtime.app"
         minSdk 24
@@ -19,6 +37,9 @@ android {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            if (hasReleaseKey) {
+                signingConfig signingConfigs.release
+            }
         }
     }
     

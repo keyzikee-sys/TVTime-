@@ -50,6 +50,11 @@ class WidgetPreferences(context: Context) {
         get() = prefs.getString(KEY_BORDER_HEX, "#3303DAC5") ?: "#3303DAC5"
         set(value) = prefs.edit().putString(KEY_BORDER_HEX, value).apply()
 
+    /** Package name of the streaming service the widget launches. */
+    var selectedServicePackage: String
+        get() = prefs.getString(KEY_SERVICE, "com.tubitv") ?: "com.tubitv"
+        set(value) = prefs.edit().putString(KEY_SERVICE, value).apply()
+
     /** Currently displayed widget page (0 = WatchList, 1 = My Stuff). */
     var currentPage: Int
         get() = prefs.getInt(KEY_CURRENT_PAGE, 0).coerceIn(0, 1)
@@ -67,5 +72,6 @@ class WidgetPreferences(context: Context) {
         private const val KEY_ACCENT_HEX = "accent_hex_color"
         private const val KEY_BORDER_HEX = "border_hex_color"
         private const val KEY_CURRENT_PAGE = "current_page"
+        private const val KEY_SERVICE = "selected_service_package"
     }
 }

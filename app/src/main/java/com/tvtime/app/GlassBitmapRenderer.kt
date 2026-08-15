@@ -2,8 +2,12 @@ package com.tvtime.app
 
 import android.graphics.Bitmap
 import android.graphics.Canvas
+import android.graphics.LinearGradient
 import android.graphics.Paint
 import android.graphics.RectF
+import android.graphics.RenderEffect
+import android.graphics.Shader
+import android.os.Build
 
 /**
  * Renders a glassmorphism-style container (rounded, semi-transparent fill with an optional
@@ -34,6 +38,7 @@ object GlassBitmapRenderer {
         cornerRadiusDp: Int,
         borderThicknessDp: Int,
         alphaPercent: Int,
+        gaussianBlurRadius: Int = 0,
         density: Float,
         gradient: Boolean = false
     ): Bitmap {
@@ -57,13 +62,37 @@ object GlassBitmapRenderer {
             heightPx - (stroke / 2f)
         )
 
+        val useBlur = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && gaussianBlurRadius > 0
+
+        // When blurring, draw a soft vertical gradient so the blur is actually visible
+        // (a flat fill would just blur into itself). Otherwise a solid / gradient fill.
         val fillPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             style = Paint.Style.FILL
-            color = if (gradient) blendWithWhite(finalBg, 0.14f) else finalBg
+            if (useBlur) {
+                shader = LinearGradient(
+                    0f, 0f, 0f, heightPx.toFloat(),
+                    blendWithWhite(finalBg, 0.25f), finalBg, Shader.TileMode.CLAMP
+                )
+            } else {
+                color = if (gradient) blendWithWhite(finalBg, 0.14f) else finalBg
+            }
+        }
+
+        if (useBlur) {
+            canvas.setRenderEffect(
+                RenderEffect.createBlurEffect(
+                    gaussianBlurRadius.toFloat(),
+                    gaussianBlurRadius.toFloat(),
+                    Shader.TileMode.CLAMP
+                )
+            )
         }
         canvas.drawRoundRect(rect, rx, rx, fillPaint)
+        if (useBlur) {
+            canvas.setRenderEffect(null)
+        }
 
-        if (gradient) {
+        if (gradient && !useBlur) {
             val highlight = Paint(Paint.ANTI_ALIAS_FLAG).apply {
                 style = Paint.Style.FILL
                 color = 0x33FFFFFF

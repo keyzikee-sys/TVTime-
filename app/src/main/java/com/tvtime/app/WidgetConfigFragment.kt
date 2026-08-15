@@ -32,6 +32,20 @@ class WidgetConfigFragment : Fragment() {
         val previewCard = view.findViewById<View>(R.id.preview_card)
         val tvPreviewTitle = view.findViewById<TextView>(R.id.tv_preview_title)
 
+        val spinnerService = view.findViewById<Spinner>(R.id.spinner_service)
+        val serviceNames = StreamingServices.ALL.map { it.name }
+        spinnerService?.adapter = ArrayAdapter(
+            requireContext(),
+            android.R.layout.simple_spinner_item,
+            serviceNames
+        ).apply {
+            setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        }
+        val currentServiceIndex = StreamingServices.ALL.indexOfFirst {
+            it.packageName == prefs.selectedServicePackage
+        }.coerceAtLeast(0)
+        spinnerService?.setSelection(currentServiceIndex)
+
         val rgPresets = view.findViewById<RadioGroup>(R.id.rg_glass_presets)
         val seekBgBlur = view.findViewById<SeekBar>(R.id.seek_bg_blur)
         val seekGaussian = view.findViewById<SeekBar>(R.id.seek_gaussian_blur)
@@ -90,6 +104,7 @@ class WidgetConfigFragment : Fragment() {
                 cornerRadiusDp = seekCornerRadius?.progress ?: 16,
                 borderThicknessDp = seekStrokeWidth?.progress ?: 2,
                 alphaPercent = seekBgBlur?.progress ?: 80,
+                gaussianBlurRadius = seekGaussian?.progress ?: 12,
                 density = density,
                 gradient = isLiquidSelected(rgPresets)
             )
@@ -231,6 +246,9 @@ class WidgetConfigFragment : Fragment() {
                 bgHexColor = currentBgHex
                 accentHexColor = currentAccentHex
                 borderHexColor = currentStrokeHex
+                selectedServicePackage = StreamingServices.ALL.getOrNull(
+                    spinnerService?.selectedItemPosition ?: 0
+                )?.packageName ?: StreamingServices.default().packageName
             }
 
             val ctx = requireContext()
@@ -243,7 +261,12 @@ class WidgetConfigFragment : Fragment() {
             intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, ids)
             ctx.sendBroadcast(intent)
 
-            Toast.makeText(ctx, "Widget Customization Saved & Updated!", Toast.LENGTH_SHORT).show()
+            val configureActivity = activity as? WidgetConfigureActivity
+            if (configureActivity != null) {
+                configureActivity.finishConfigure()
+            } else {
+                Toast.makeText(ctx, "Widget Customization Saved & Updated!", Toast.LENGTH_SHORT).show()
+            }
         }
 
         return view
