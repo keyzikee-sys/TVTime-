@@ -31,14 +31,13 @@ class TVTimeWidgetProvider : AppWidgetProvider() {
         val ids = appWidgetManager.getAppWidgetIds(
             ComponentName(context, TVTimeWidgetProvider::class.java)
         )
-        val prefs = WidgetPreferences(context)
         when (intent.action) {
             ACTION_NEXT_PAGE -> {
-                prefs.currentPage = 1
+                ids.forEach { WidgetPreferences(context, it).currentPage = 1 }
                 ids.forEach { updateWidget(context, appWidgetManager, it) }
             }
             ACTION_PREV_PAGE -> {
-                prefs.currentPage = 0
+                ids.forEach { WidgetPreferences(context, it).currentPage = 0 }
                 ids.forEach { updateWidget(context, appWidgetManager, it) }
             }
         }
@@ -50,7 +49,7 @@ class TVTimeWidgetProvider : AppWidgetProvider() {
         appWidgetId: Int
     ) {
         val views = RemoteViews(context.packageName, R.layout.widget_layout)
-        val prefs = WidgetPreferences(context)
+        val prefs = WidgetPreferences(context, appWidgetId)
         val density = context.resources.displayMetrics.density
 
         val isLiquid = GlassBitmapRenderer.isLiquid(prefs.glassPreset)

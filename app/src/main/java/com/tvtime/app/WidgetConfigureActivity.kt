@@ -30,7 +30,14 @@ class WidgetConfigureActivity : AppCompatActivity() {
 
         if (savedInstanceState == null) {
             supportFragmentManager.beginTransaction()
-                .replace(android.R.id.content, WidgetConfigFragment())
+                .replace(
+                    android.R.id.content,
+                    WidgetConfigFragment().apply {
+                        arguments = Bundle().apply {
+                            putInt(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
+                        }
+                    }
+                )
                 .commit()
         }
     }

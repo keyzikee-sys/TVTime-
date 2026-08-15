@@ -13,7 +13,11 @@ background, accent, border, corner radius, opacity and blur to match your home s
   YouTube, selected in the config UI.
 - **Glass customization** — Live-preview presets (Frosted Light, Dark Obsidian, Tinted
   Neon, Liquid Blur, Liquid No-Blur) plus manual control of background ARGB, accent, stroke,
-  stroke width, corner radius and background opacity.
+  stroke width, corner radius and background opacity. Accent and stroke colors are chosen
+  with a real Hue/Saturation/Value/Alpha color picker.
+- **Per-widget settings** — each widget instance stores its own style and launch app. The
+  in-app *Widget Config* tab edits a shared default profile (applied to all current widgets),
+  while configuring a widget on add customizes just that instance.
 - **Real glass rendering** — the selected style is rendered to a bitmap and applied to the
   widget background (not just a static color). On Android 12+ a true `RenderEffect` blur is
   applied to the fill; the liquid preset also adds a subtle highlight.

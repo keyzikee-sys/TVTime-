@@ -4,64 +4,112 @@ import android.content.Context
 import android.content.SharedPreferences
 
 /**
- * Single source of truth for the widget's customization settings.
- * Replaces the scattered, inconsistent [android.content.SharedPreferences] reads/writes
- * previously duplicated across the provider and config UI.
+ * Settings for a single widget instance. When [widgetId] is [DEFAULT_ID] this object edits
+ * the *default profile* — the template new widgets inherit and the fallback every widget
+ * reads from when it has no instance-specific override.
+ *
+ * All other ids are real `appWidgetId` values; their getters fall back to the default
+ * profile (then to hardcoded defaults) so an un-customized widget always reflects the
+ * current template.
  */
-class WidgetPreferences(context: Context) {
+class WidgetPreferences(context: Context, private val widgetId: Int = DEFAULT_ID) {
 
     private val prefs: SharedPreferences =
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
+    private fun sp(base: String): String =
+        if (widgetId == DEFAULT_ID) "default_$base" else "w${widgetId}_$base"
+
+    private fun getString(base: String, def: String): String {
+        val v = prefs.getString(sp(base), null)
+        if (v != null) return v
+        return prefs.getString("default_$base", def) ?: def
+    }
+
+    private fun getInt(base: String, def: Int): Int {
+        if (prefs.contains(sp(base))) return prefs.getInt(sp(base), def)
+        return prefs.getInt("default_$base", def)
+    }
+
+    private fun putString(base: String, value: String) =
+        prefs.edit().putString(sp(base), value).apply()
+
+    private fun putInt(base: String, value: Int) =
+        prefs.edit().putInt(sp(base), value).apply()
+
     var glassPreset: String
-        get() = prefs.getString(KEY_PRESET, GlassBitmapRenderer.PRESET_LIGHT)
-            ?: GlassBitmapRenderer.PRESET_LIGHT
-        set(value) = prefs.edit().putString(KEY_PRESET, value).apply()
+        get() = getString(KEY_PRESET, GlassBitmapRenderer.PRESET_LIGHT)
+        set(value) = putString(KEY_PRESET, value)
 
     var bgBlurOpacity: Int
-        get() = prefs.getInt(KEY_BG_BLUR, 80)
-        set(value) = prefs.edit().putInt(KEY_BG_BLUR, value).apply()
+        get() = getInt(KEY_BG_BLUR, 80)
+        set(value) = putInt(KEY_BG_BLUR, value)
 
     var gaussianBlurRadius: Int
-        get() = prefs.getInt(KEY_GAUSSIAN, 12)
-        set(value) = prefs.edit().putInt(KEY_GAUSSIAN, value).apply()
+        get() = getInt(KEY_GAUSSIAN, 12)
+        set(value) = putInt(KEY_GAUSSIAN, value)
 
     var layerBlurSoftening: Int
-        get() = prefs.getInt(KEY_LAYER, 8)
-        set(value) = prefs.edit().putInt(KEY_LAYER, value).apply()
+        get() = getInt(KEY_LAYER, 8)
+        set(value) = putInt(KEY_LAYER, value)
 
     var borderThickness: Int
-        get() = prefs.getInt(KEY_BORDER, 2)
-        set(value) = prefs.edit().putInt(KEY_BORDER, value).apply()
+        get() = getInt(KEY_BORDER, 2)
+        set(value) = putInt(KEY_BORDER, value)
 
     var cornerRadius: Int
-        get() = prefs.getInt(KEY_CORNER, 16)
-        set(value) = prefs.edit().putInt(KEY_CORNER, value).apply()
+        get() = getInt(KEY_CORNER, 16)
+        set(value) = putInt(KEY_CORNER, value)
 
     var bgHexColor: String
-        get() = prefs.getString(KEY_BG_HEX, "#CC1E1E1E") ?: "#CC1E1E1E"
-        set(value) = prefs.edit().putString(KEY_BG_HEX, value).apply()
+        get() = getString(KEY_BG_HEX, "#CC1E1E1E")
+        set(value) = putString(KEY_BG_HEX, value)
 
     var accentHexColor: String
-        get() = prefs.getString(KEY_ACCENT_HEX, "#FFFF1493") ?: "#FFFF1493"
-        set(value) = prefs.edit().putString(KEY_ACCENT_HEX, value).apply()
+        get() = getString(KEY_ACCENT_HEX, "#FFFF1493")
+        set(value) = putString(KEY_ACCENT_HEX, value)
 
     var borderHexColor: String
-        get() = prefs.getString(KEY_BORDER_HEX, "#3303DAC5") ?: "#3303DAC5"
-        set(value) = prefs.edit().putString(KEY_BORDER_HEX, value).apply()
+        get() = getString(KEY_BORDER_HEX, "#3303DAC5")
+        set(value) = putString(KEY_BORDER_HEX, value)
 
-    /** Package name of the streaming service the widget launches. */
     var selectedServicePackage: String
-        get() = prefs.getString(KEY_SERVICE, "com.tubitv") ?: "com.tubitv"
-        set(value) = prefs.edit().putString(KEY_SERVICE, value).apply()
+        get() = getString(KEY_SERVICE, "com.tubitv")
+        set(value) = putString(KEY_SERVICE, value)
 
-    /** Currently displayed widget page (0 = WatchList, 1 = My Stuff). */
     var currentPage: Int
-        get() = prefs.getInt(KEY_CURRENT_PAGE, 0).coerceIn(0, 1)
-        set(value) = prefs.edit().putInt(KEY_CURRENT_PAGE, value.coerceIn(0, 1)).apply()
+        get() = getInt(KEY_CURRENT_PAGE, 0).coerceIn(0, 1)
+        set(value) = putInt(KEY_CURRENT_PAGE, value.coerceIn(0, 1))
+
+    fun toStyle(): WidgetStyle = WidgetStyle(
+        glassPreset = glassPreset,
+        bgBlurOpacity = bgBlurOpacity,
+        gaussianBlurRadius = gaussianBlurRadius,
+        layerBlurSoftening = layerBlurSoftening,
+        borderThickness = borderThickness,
+        cornerRadius = cornerRadius,
+        bgHexColor = bgHexColor,
+        accentHexColor = accentHexColor,
+        borderHexColor = borderHexColor,
+        selectedServicePackage = selectedServicePackage
+    )
+
+    fun applyStyle(style: WidgetStyle) {
+        glassPreset = style.glassPreset
+        bgBlurOpacity = style.bgBlurOpacity
+        gaussianBlurRadius = style.gaussianBlurRadius
+        layerBlurSoftening = style.layerBlurSoftening
+        borderThickness = style.borderThickness
+        cornerRadius = style.cornerRadius
+        bgHexColor = style.bgHexColor
+        accentHexColor = style.accentHexColor
+        borderHexColor = style.borderHexColor
+        selectedServicePackage = style.selectedServicePackage
+    }
 
     companion object {
         const val PREFS_NAME = "TVTimeWidgetPrefs"
+        const val DEFAULT_ID = -1
         private const val KEY_PRESET = "glass_preset"
         private const val KEY_BG_BLUR = "bg_blur_opacity"
         private const val KEY_GAUSSIAN = "gaussian_blur_radius"
@@ -75,3 +123,17 @@ class WidgetPreferences(context: Context) {
         private const val KEY_SERVICE = "selected_service_package"
     }
 }
+
+/** Complete, serializable snapshot of a widget's visual + launch configuration. */
+data class WidgetStyle(
+    val glassPreset: String,
+    val bgBlurOpacity: Int,
+    val gaussianBlurRadius: Int,
+    val layerBlurSoftening: Int,
+    val borderThickness: Int,
+    val cornerRadius: Int,
+    val bgHexColor: String,
+    val accentHexColor: String,
+    val borderHexColor: String,
+    val selectedServicePackage: String
+)

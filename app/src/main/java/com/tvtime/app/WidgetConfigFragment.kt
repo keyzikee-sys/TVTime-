@@ -1,6 +1,5 @@
 package com.tvtime.app
 
-import android.app.AlertDialog
 import android.appwidget.AppWidgetManager
 import android.content.ComponentName
 import android.content.Context
@@ -27,7 +26,20 @@ class WidgetConfigFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View? {
         val view = inflater.inflate(R.layout.fragment_widget_config, container, false)
-        val prefs = WidgetPreferences(requireContext())
+
+        val configureId = arguments?.getInt(
+            AppWidgetManager.EXTRA_APPWIDGET_ID,
+            AppWidgetManager.INVALID_APPWIDGET_ID
+        ) ?: AppWidgetManager.INVALID_APPWIDGET_ID
+        val isConfigure = configureId != AppWidgetManager.INVALID_APPWIDGET_ID
+
+        // Reads come from the default profile (in-app) or this widget's own settings
+        // (configure-on-add). applyPreset / save also target this object.
+        val prefs = if (isConfigure) {
+            WidgetPreferences(requireContext(), configureId)
+        } else {
+            WidgetPreferences(requireContext())
+        }
 
         val previewCard = view.findViewById<View>(R.id.preview_card)
         val tvPreviewTitle = view.findViewById<TextView>(R.id.tv_preview_title)
@@ -211,7 +223,7 @@ class WidgetConfigFragment : Fragment() {
         })
 
         btnPickAccent?.setOnClickListener {
-            showColorWheelDialog("Select Accent Color") { argbHex ->
+            showColorPickerDialog(requireContext(), "Select Accent Color", currentAccentHex) { argbHex ->
                 currentAccentHex = argbHex
                 updateColorView(viewAccentPreview, argbHex)
                 refreshLivePreview()
@@ -219,7 +231,7 @@ class WidgetConfigFragment : Fragment() {
         }
 
         btnPickStroke?.setOnClickListener {
-            showColorWheelDialog("Select Stroke (Border) Color") { argbHex ->
+            showColorPickerDialog(requireContext(), "Select Stroke (Border) Color", currentStrokeHex) { argbHex ->
                 currentStrokeHex = argbHex
                 updateColorView(viewStrokePreview, argbHex)
                 refreshLivePreview()
@@ -235,23 +247,33 @@ class WidgetConfigFragment : Fragment() {
                 R.id.rb_preset_liquid_noblur -> GlassBitmapRenderer.PRESET_LIQUID_NOBLUR
                 else -> GlassBitmapRenderer.PRESET_LIGHT
             }
+            val servicePackage = StreamingServices.ALL.getOrNull(
+                spinnerService?.selectedItemPosition ?: 0
+            )?.packageName ?: StreamingServices.default().packageName
 
-            prefs.apply {
-                glassPreset = selectedPreset
-                bgBlurOpacity = seekBgBlur?.progress ?: 80
-                gaussianBlurRadius = if (isNoBlur) 0 else seekGaussian?.progress ?: 12
-                layerBlurSoftening = if (isNoBlur) 0 else seekLayer?.progress ?: 8
-                borderThickness = seekStrokeWidth?.progress ?: 2
-                cornerRadius = seekCornerRadius?.progress ?: 16
-                bgHexColor = currentBgHex
-                accentHexColor = currentAccentHex
-                borderHexColor = currentStrokeHex
-                selectedServicePackage = StreamingServices.ALL.getOrNull(
-                    spinnerService?.selectedItemPosition ?: 0
-                )?.packageName ?: StreamingServices.default().packageName
-            }
+            val style = WidgetStyle(
+                glassPreset = selectedPreset,
+                bgBlurOpacity = seekBgBlur?.progress ?: 80,
+                gaussianBlurRadius = if (isNoBlur) 0 else seekGaussian?.progress ?: 12,
+                layerBlurSoftening = if (isNoBlur) 0 else seekLayer?.progress ?: 8,
+                borderThickness = seekStrokeWidth?.progress ?: 2,
+                cornerRadius = seekCornerRadius?.progress ?: 16,
+                bgHexColor = currentBgHex,
+                accentHexColor = currentAccentHex,
+                borderHexColor = currentStrokeHex,
+                selectedServicePackage = servicePackage
+            )
 
             val ctx = requireContext()
+            if (isConfigure) {
+                WidgetPreferences(ctx, configureId).applyStyle(style)
+            } else {
+                WidgetPreferences(ctx).applyStyle(style)
+                AppWidgetManager.getInstance(ctx)
+                    .getAppWidgetIds(ComponentName(ctx, TVTimeWidgetProvider::class.java))
+                    .forEach { WidgetPreferences(ctx, it).applyStyle(style) }
+            }
+
             val intent = Intent(ctx, TVTimeWidgetProvider::class.java).apply {
                 action = AppWidgetManager.ACTION_APPWIDGET_UPDATE
             }
@@ -287,53 +309,6 @@ class WidgetConfigFragment : Fragment() {
             cornerRadius = 8f
         }
         v?.background = drawable
-    }
-
-    private fun showColorWheelDialog(title: String, onColorSelected: (String) -> Unit) {
-        val colors = intArrayOf(
-            Color.parseColor("#FFFF1493"),
-            Color.parseColor("#CCFF1493"),
-            Color.parseColor("#FFFF007F"),
-            Color.parseColor("#FFD81B60"),
-            Color.parseColor("#FF00F2FE"),
-            Color.parseColor("#3303DAC5"),
-            Color.parseColor("#FF4FACFE"),
-            Color.parseColor("#FF00FF00"),
-            Color.parseColor("#FFFFD700"),
-            Color.parseColor("#CC1E1E1E")
-        )
-
-        val gridLayout = GridLayout(requireContext()).apply {
-            columnCount = 5
-            setPadding(32, 32, 32, 32)
-        }
-
-        val dialog = AlertDialog.Builder(requireContext())
-            .setTitle(title)
-            .setView(gridLayout)
-            .setNegativeButton("Cancel", null)
-            .create()
-
-        for (color in colors) {
-            val btn = View(requireContext()).apply {
-                layoutParams = ViewGroup.MarginLayoutParams(100, 100).apply {
-                    setMargins(10, 10, 10, 10)
-                }
-                val drawable = GradientDrawable().apply {
-                    setColor(color)
-                    setStroke(2, Color.WHITE)
-                    cornerRadius = 16f
-                }
-                background = drawable
-                setOnClickListener {
-                    onColorSelected(String.format("#%08X", color))
-                    dialog.dismiss()
-                }
-            }
-            gridLayout.addView(btn)
-        }
-
-        dialog.show()
     }
 
     companion object {
