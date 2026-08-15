@@ -15,6 +15,7 @@ class MainActivity : AppCompatActivity() {
 
         if (savedInstanceState == null) {
             loadFragment(WatchListFragment())
+            bottomNav?.selectedItemId = R.id.nav_watchlist
         }
 
         bottomNav?.setOnItemSelectedListener { item ->
