@@ -39,14 +39,16 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
-                android:text="Open Tubi App" />
+                android:text="Open Tubi App"
+                android:contentDescription="Open streaming app" />
 
             <Button
                 android:id="@+id/btn_next_page"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
-                android:text="Next: My Stuff ➡️" />
+                android:text="Next: My Stuff ➡️"
+                android:contentDescription="Go to My Stuff page" />
         </LinearLayout>
 
         <!-- Page 2: My Stuff -->
@@ -70,14 +72,16 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
-                android:text="Widget Customization" />
+                android:text="Widget Customization"
+                android:contentDescription="Open widget customization" />
 
             <Button
                 android:id="@+id/btn_prev_page"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
-                android:text="⬅️ Back to WatchList" />
+                android:text="⬅️ Back to WatchList"
+                android:contentDescription="Go to WatchList page" />
         </LinearLayout>
 
     </ViewFlipper>

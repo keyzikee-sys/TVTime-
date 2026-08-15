@@ -28,18 +28,35 @@ class TVTimeWidgetProvider : AppWidgetProvider() {
     override fun onReceive(context: Context, intent: Intent) {
         super.onReceive(context, intent)
         val appWidgetManager = AppWidgetManager.getInstance(context)
-        val ids = appWidgetManager.getAppWidgetIds(
-            ComponentName(context, TVTimeWidgetProvider::class.java)
-        )
         when (intent.action) {
-            ACTION_NEXT_PAGE -> {
-                ids.forEach { WidgetPreferences(context, it).currentPage = 1 }
-                ids.forEach { updateWidget(context, appWidgetManager, it) }
-            }
-            ACTION_PREV_PAGE -> {
-                ids.forEach { WidgetPreferences(context, it).currentPage = 0 }
-                ids.forEach { updateWidget(context, appWidgetManager, it) }
-            }
+            ACTION_NEXT_PAGE ->
+                flipPage(context, appWidgetManager, intent, 1)
+            ACTION_PREV_PAGE ->
+                flipPage(context, appWidgetManager, intent, 0)
+        }
+    }
+
+    /** Flips the page of the targeted widget only (if its id is carried in the intent). */
+    private fun flipPage(
+        context: Context,
+        appWidgetManager: AppWidgetManager,
+        intent: Intent,
+        page: Int
+    ) {
+        val targetId = intent.getIntExtra(
+            AppWidgetManager.EXTRA_APPWIDGET_ID,
+            AppWidgetManager.INVALID_APPWIDGET_ID
+        )
+        if (targetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
+            WidgetPreferences(context, targetId).currentPage = page
+            updateWidget(context, appWidgetManager, targetId)
+        } else {
+            // Fallback for any broadcast sent without an explicit id.
+            val ids = appWidgetManager.getAppWidgetIds(
+                ComponentName(context, TVTimeWidgetProvider::class.java)
+            )
+            ids.forEach { WidgetPreferences(context, it).currentPage = page }
+            ids.forEach { updateWidget(context, appWidgetManager, it) }
         }
     }
 
@@ -80,14 +97,20 @@ class TVTimeWidgetProvider : AppWidgetProvider() {
 
         val nextPendingIntent = PendingIntent.getBroadcast(
             context, appWidgetId,
-            Intent(context, TVTimeWidgetProvider::class.java).apply { action = ACTION_NEXT_PAGE },
+            Intent(context, TVTimeWidgetProvider::class.java).apply {
+                action = ACTION_NEXT_PAGE
+                putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
+            },
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
         views.setOnClickPendingIntent(R.id.btn_next_page, nextPendingIntent)
 
         val prevPendingIntent = PendingIntent.getBroadcast(
             context, appWidgetId,
-            Intent(context, TVTimeWidgetProvider::class.java).apply { action = ACTION_PREV_PAGE },
+            Intent(context, TVTimeWidgetProvider::class.java).apply {
+                action = ACTION_PREV_PAGE
+                putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
+            },
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
         views.setOnClickPendingIntent(R.id.btn_prev_page, prevPendingIntent)

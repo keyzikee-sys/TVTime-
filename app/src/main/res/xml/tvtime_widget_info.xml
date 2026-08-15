@@ -5,6 +5,8 @@
     android:updatePeriodMillis="86400000"
     android:initialLayout="@layout/widget_layout"
     android:configure="com.tvtime.app.WidgetConfigureActivity"
+    android:previewImage="@drawable/widget_preview"
+    android:description="@string/widget_description"
     android:resizeMode="horizontal|vertical"
     android:widgetCategory="home_screen">
 </appwidget-provider>
