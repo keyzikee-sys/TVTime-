@@ -5,15 +5,17 @@ import android.graphics.Canvas
 import android.graphics.LinearGradient
 import android.graphics.Paint
 import android.graphics.RectF
-import android.graphics.RenderEffect
-import android.graphics.RenderNode
 import android.graphics.Shader
-import android.os.Build
 
 /**
  * Renders a glassmorphism-style container (rounded, semi-transparent fill with an optional
  * border and a subtle top highlight for the "liquid" preset) into a [Bitmap] that can be
  * applied to both the home-screen widget and the in-app live preview.
+ *
+ * Note: a widget background is rendered into an offscreen [Bitmap] (a software canvas), so
+ * framework blur APIs like [android.graphics.RenderEffect]/[android.graphics.RenderNode] are
+ * unavailable here. We therefore apply a manual box blur, which softens the gradient sheen
+ * to give a frosted-glass look on every Android version.
  */
 object GlassBitmapRenderer {
 
@@ -63,10 +65,10 @@ object GlassBitmapRenderer {
             heightPx - (stroke / 2f)
         )
 
-        val useBlur = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && gaussianBlurRadius > 0
+        val useBlur = gaussianBlurRadius > 0
 
-        // When blurring, draw a soft vertical gradient so the blur is actually visible
-        // (a flat fill would just blur into itself). Otherwise a solid / gradient fill.
+        // When blurring, use a soft vertical gradient so the blur is actually visible
+        // (a flat fill would blur into itself). Otherwise a solid / gradient fill.
         val fillPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             style = Paint.Style.FILL
             if (useBlur) {
@@ -78,28 +80,9 @@ object GlassBitmapRenderer {
                 color = if (gradient) blendWithWhite(finalBg, 0.14f) else finalBg
             }
         }
+        canvas.drawRoundRect(rect, rx, rx, fillPaint)
 
-        if (useBlur) {
-            // Canvas.setRenderEffect is unavailable on this toolchain; blur via a RenderNode
-            // (API 29+) and draw it back onto the bitmap canvas.
-            val renderNode = RenderNode("glassBlur")
-            renderNode.setPosition(0, 0, widthPx, heightPx)
-            val rnCanvas = renderNode.beginRecording()
-            rnCanvas.drawRoundRect(rect, rx, rx, fillPaint)
-            renderNode.endRecording()
-            renderNode.setRenderEffect(
-                RenderEffect.createBlurEffect(
-                    gaussianBlurRadius.toFloat(),
-                    gaussianBlurRadius.toFloat(),
-                    Shader.TileMode.CLAMP
-                )
-            )
-            canvas.drawRenderNode(renderNode)
-        } else {
-            canvas.drawRoundRect(rect, rx, rx, fillPaint)
-        }
-
-        if (gradient && !useBlur) {
+        if (gradient) {
             val highlight = Paint(Paint.ANTI_ALIAS_FLAG).apply {
                 style = Paint.Style.FILL
                 color = 0x33FFFFFF
@@ -108,6 +91,10 @@ object GlassBitmapRenderer {
                 RectF(rect.left, rect.top, rect.right, rect.top + rect.height() * 0.45f),
                 rx, rx, highlight
             )
+        }
+
+        if (useBlur) {
+            applyBoxBlur(bitmap, gaussianBlurRadius)
         }
 
         if (stroke > 0) {
@@ -121,6 +108,75 @@ object GlassBitmapRenderer {
 
         return bitmap
     }
+
+    /** In-place separable box blur — safe on software canvases (unlike RenderNode). */
+    private fun applyBoxBlur(bitmap: Bitmap, radius: Int) {
+        val r = radius.coerceIn(1, 25)
+        val w = bitmap.width
+        val h = bitmap.height
+        if (w == 0 || h == 0) return
+
+        val pixels = IntArray(w * h)
+        bitmap.getPixels(pixels, 0, w, 0, 0, w, h)
+        val temp = IntArray(w * h)
+        val window = r * 2 + 1
+
+        // Horizontal pass.
+        for (y in 0 until h) {
+            var a = 0
+            var red = 0
+            var green = 0
+            var blue = 0
+            for (k in -r..r) {
+                val c = pixels[y * w + k.coerceIn(0, w - 1)]
+                a += c shr 24 and 0xFF
+                red += c shr 16 and 0xFF
+                green += c shr 8 and 0xFF
+                blue += c and 0xFF
+            }
+            for (x in 0 until w) {
+                temp[y * w + x] = pack(a / window, red / window, green / window, blue / window)
+                val cOut = pixels[y * w + (x - r).coerceIn(0, w - 1)]
+                val cIn = pixels[y * w + (x + r + 1).coerceIn(0, w - 1)]
+                a += (cIn shr 24 and 0xFF) - (cOut shr 24 and 0xFF)
+                red += (cIn shr 16 and 0xFF) - (cOut shr 16 and 0xFF)
+                green += (cIn shr 8 and 0xFF) - (cOut shr 8 and 0xFF)
+                blue += (cIn and 0xFF) - (cOut and 0xFF)
+            }
+        }
+
+        // Vertical pass.
+        for (x in 0 until w) {
+            var a = 0
+            var red = 0
+            var green = 0
+            var blue = 0
+            for (k in -r..r) {
+                val c = temp[(k.coerceIn(0, h - 1)) * w + x]
+                a += c shr 24 and 0xFF
+                red += c shr 16 and 0xFF
+                green += c shr 8 and 0xFF
+                blue += c and 0xFF
+            }
+            for (y in 0 until h) {
+                pixels[y * w + x] = pack(a / window, red / window, green / window, blue / window)
+                val cOut = temp[(y - r).coerceIn(0, h - 1) * w + x]
+                val cIn = temp[(y + r + 1).coerceIn(0, h - 1) * w + x]
+                a += (cIn shr 24 and 0xFF) - (cOut shr 24 and 0xFF)
+                red += (cIn shr 16 and 0xFF) - (cOut shr 16 and 0xFF)
+                green += (cIn shr 8 and 0xFF) - (cOut shr 8 and 0xFF)
+                blue += (cIn and 0xFF) - (cOut and 0xFF)
+            }
+        }
+
+        bitmap.setPixels(pixels, 0, w, 0, 0, w, h)
+    }
+
+    private fun pack(a: Int, r: Int, g: Int, b: Int): Int =
+        (a.coerceIn(0, 255) shl 24) or
+            (r.coerceIn(0, 255) shl 16) or
+            (g.coerceIn(0, 255) shl 8) or
+            b.coerceIn(0, 255)
 
     private fun blendWithWhite(color: Int, amount: Float): Int {
         val r = (color shr 16) and 0xFF
