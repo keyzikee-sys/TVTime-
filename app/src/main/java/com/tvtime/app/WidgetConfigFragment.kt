@@ -15,6 +15,10 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.*
 import androidx.fragment.app.Fragment
+import org.json.JSONArray
+import org.json.JSONObject
+import java.net.HttpURLConnection
+import java.net.URL
 
 class WidgetConfigFragment : Fragment() {
 
@@ -127,6 +131,66 @@ class WidgetConfigFragment : Fragment() {
                     }
                 }
             }
+        }
+
+        // --- Catalog data (optional third-party Tubi catalog API: URL + key) ---
+        val catalogPrefs = requireContext().getSharedPreferences("TVTimeCatalog", Context.MODE_PRIVATE)
+        val etCatalogUrl = view.findViewById<EditText>(R.id.et_catalog_url)
+        val etCatalogKey = view.findViewById<EditText>(R.id.et_catalog_key)
+        val btnLoadCatalog = view.findViewById<Button>(R.id.btn_load_catalog)
+        val tvCatalogStatus = view.findViewById<TextView>(R.id.tv_catalog_status)
+        etCatalogUrl?.setText(catalogPrefs.getString("url", ""))
+        etCatalogKey?.setText(catalogPrefs.getString("key", ""))
+
+        btnLoadCatalog?.setOnClickListener {
+            val url = etCatalogUrl?.text?.toString()?.trim() ?: ""
+            val key = etCatalogKey?.text?.toString()?.trim() ?: ""
+            if (url.isEmpty() || key.isEmpty()) {
+                tvCatalogStatus?.text = "Enter both API URL and key"
+                return@setOnClickListener
+            }
+            catalogPrefs.edit().putString("url", url).putString("key", key).apply()
+            btnLoadCatalog.isEnabled = false
+            tvCatalogStatus?.text = "Loading…"
+            Thread {
+                try {
+                    val conn = URL(url).openConnection() as HttpURLConnection
+                    conn.requestMethod = "GET"
+                    conn.setRequestProperty("Accept", "application/json")
+                    conn.setRequestProperty("User-Agent", "TVTimeApp")
+                    conn.setRequestProperty("X-API-Key", key)
+                    val code = conn.responseCode
+                    val resp = try {
+                        conn.inputStream.bufferedReader().readText()
+                    } catch (_: Exception) {
+                        conn.errorStream?.bufferedReader()?.readText() ?: ""
+                    }
+                    conn.disconnect()
+                    if (code !in 200..299) {
+                        requireActivity().runOnUiThread {
+                            btnLoadCatalog.isEnabled = true
+                            tvCatalogStatus?.text = "Fetch failed (HTTP $code)"
+                        }
+                        return@Thread
+                    }
+                    val items = parseCatalog(resp)
+                    requireActivity().runOnUiThread {
+                        btnLoadCatalog.isEnabled = true
+                        if (items.isNullOrEmpty()) {
+                            tvCatalogStatus?.text = "No items found in response"
+                        } else {
+                            WatchlistStore.init(requireContext())
+                            WatchlistStore.saveWatchlist(items)
+                            tvCatalogStatus?.text = "Loaded ${items.size} titles into WatchList"
+                        }
+                    }
+                } catch (e: Exception) {
+                    requireActivity().runOnUiThread {
+                        btnLoadCatalog.isEnabled = true
+                        tvCatalogStatus?.text = "Error: ${e.message ?: "network"}"
+                    }
+                }
+            }.start()
         }
 
         currentBgHex = prefs.bgHexColor
@@ -365,6 +429,31 @@ class WidgetConfigFragment : Fragment() {
     companion object {
         private const val PREVIEW_WIDTH_PX = 360
         private const val PREVIEW_HEIGHT_PX = 180
+    }
+
+    private fun parseCatalog(resp: String): List<ShowItem>? {
+        val json = try { JSONObject(resp) } catch (_: Exception) { null }
+        val arr: JSONArray? = when {
+            json != null && json.has("results") -> json.optJSONArray("results")
+            json != null && json.has("data") -> json.optJSONArray("data")
+            json != null && json.has("contents") -> json.optJSONArray("contents")
+            json != null && json.has("items") -> json.optJSONArray("items")
+            json != null && json.has("entities") -> json.optJSONArray("entities")
+            else -> null
+        }
+        val source = arr ?: run {
+            try { JSONArray(resp) } catch (_: Exception) { null }
+        }
+        if (source == null) return null
+        val out = mutableListOf<ShowItem>()
+        for (i in 0 until source.length()) {
+            val o = source.optJSONObject(i) ?: continue
+            val title = o.optString("title", o.optString("name", ""))
+            if (title.isEmpty()) continue
+            val subtitle = o.optString("description", o.optString("subtitle", ""))
+            out.add(ShowItem(title, subtitle, 0))
+        }
+        return if (out.isNotEmpty()) out else null
     }
 }
 
