@@ -1,15 +1,24 @@
 package com.tvtime.app
 
+import android.app.AlertDialog
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
+import android.widget.EditText
+import android.widget.SeekBar
+import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 
 class WatchListFragment : Fragment() {
+
+    private var list: MutableList<ShowItem> = mutableListOf()
+    private var adapter: ShowListAdapter? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -17,6 +26,9 @@ class WatchListFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View? {
         val view = inflater.inflate(R.layout.fragment_watchlist, container, false)
+
+        WatchlistStore.init(requireContext())
+        list = WatchlistStore.getWatchlist()
 
         val service = StreamingServices.byPackage(
             WidgetPreferences(requireContext()).selectedServicePackage
@@ -26,32 +38,48 @@ class WatchListFragment : Fragment() {
         button?.text = "Open ${service.name}"
         button?.setOnClickListener { openService(requireContext(), service) }
 
+        adapter = ShowListAdapter(list) { item ->
+            list.remove(item)
+            WatchlistStore.saveWatchlist(list)
+            adapter?.notifyDataSetChanged()
+        }
         val recycler = view.findViewById<RecyclerView>(R.id.rv_watchlist)
         recycler?.layoutManager = LinearLayoutManager(requireContext())
-        recycler?.adapter = ShowListAdapter(sampleShows())
+        recycler?.adapter = adapter
 
-        if (TubiAccount.isLoggedIn()) {
-            TubiRepository.fetchWatchlist { items ->
-                val list = items ?: sampleShows()
-                recycler?.post {
-                    recycler.adapter = ShowListAdapter(list)
-                }
-            }
-        }
+        view.findViewById<Button>(R.id.btn_add_watchlist)
+            ?.setOnClickListener { showAddDialog(WatchlistStore::saveWatchlist) }
 
         return view
     }
 
-    private fun sampleShows(): List<ShowItem> = listOf(
-        ShowItem("Naruto", "S4 · E40 — The Ultimate Secret", 65),
-        ShowItem("Stargate SG-1", "S7 · E12 — Evolution", 80),
-        ShowItem("Columbo", "S2 · E5 — The Greenhouse Jungle", 40),
-        ShowItem("Dragon Ball Z", "S3 · E90 — Trunks Revealed", 55),
-        ShowItem("Farscape", "S1 · E8 — That Old Black Magic", 30),
-        ShowItem("Xena: Warrior Princess", "S4 · E10 — Crusader", 72),
-        ShowItem("Paranormal Activity", "Film · 1h 39m", 90),
-        ShowItem("One Piece", "S10 · E200 — The Light of Shandora", 25)
-    )
+    private fun showAddDialog(onSave: (List<ShowItem>) -> Unit) {
+        val dialogView = layoutInflater.inflate(R.layout.dialog_add_show, null)
+        val etTitle = dialogView.findViewById<EditText>(R.id.et_title)
+        val etSubtitle = dialogView.findViewById<EditText>(R.id.et_subtitle)
+        val seek = dialogView.findViewById<SeekBar>(R.id.seek_progress)
+        val tvProgress = dialogView.findViewById<TextView>(R.id.tv_progress_label)
+        seek?.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(s: SeekBar?, p: Int, u: Boolean) {
+                tvProgress?.text = "Progress: $p%"
+            }
+            override fun onStartTrackingTouch(s: SeekBar?) {}
+            override fun onStopTrackingTouch(s: SeekBar?) {}
+        })
+
+        AlertDialog.Builder(requireContext())
+            .setView(dialogView)
+            .setPositiveButton("Add") { _, _ ->
+                val title = etTitle?.text?.toString()?.trim() ?: ""
+                if (title.isEmpty()) return@setPositiveButton
+                val subtitle = etSubtitle?.text?.toString()?.trim() ?: ""
+                list.add(0, ShowItem(title, subtitle, seek?.progress ?: 0))
+                onSave(list)
+                adapter?.notifyDataSetChanged()
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
 
     private fun openService(context: android.content.Context, service: StreamingServices.Service) {
         context.startActivity(StreamingServices.createLaunchIntent(context, service))

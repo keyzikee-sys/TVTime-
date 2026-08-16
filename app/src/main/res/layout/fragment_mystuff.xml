@@ -23,6 +23,16 @@
         android:textColor="#B0B0B0"
         android:textSize="14sp" />
 
+    <Button
+        android:id="@+id/btn_add_mystuff"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="10dp"
+        android:text="＋ Add item"
+        android:textColor="#0F0C1B"
+        android:textStyle="bold"
+        android:backgroundTint="#00F2FE" />
+
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rv_mystuff"
         android:layout_width="match_parent"
