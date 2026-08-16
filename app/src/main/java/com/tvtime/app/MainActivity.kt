@@ -15,13 +15,11 @@ class MainActivity : AppCompatActivity() {
         TubiAccount.init(this)
         WatchlistStore.init(this)
 
-        val watchListTab = findViewById<Button>(R.id.tab_watchlist)
         val myStuffTab = findViewById<Button>(R.id.tab_mystuff)
         val configTab = findViewById<Button>(R.id.tab_config)
-        tabs = listOf(watchListTab, myStuffTab, configTab)
+        tabs = listOf(myStuffTab, configTab)
 
         val fragments = listOf(
-            WatchListFragment(),
             MyStuffFragment(),
             WidgetConfigFragment()
         )
@@ -31,9 +29,8 @@ class MainActivity : AppCompatActivity() {
             loadFragment(fragments[index])
         }
 
-        watchListTab.setOnClickListener { onTabClick(0) }
-        myStuffTab.setOnClickListener { onTabClick(1) }
-        configTab.setOnClickListener { onTabClick(2) }
+        myStuffTab.setOnClickListener { onTabClick(0) }
+        configTab.setOnClickListener { onTabClick(1) }
 
         if (savedInstanceState == null) {
             selectTab(0)

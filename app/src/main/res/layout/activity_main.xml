@@ -16,18 +16,7 @@
         android:layout_height="56dp"
         android:background="@color/bg_dark"
         android:orientation="horizontal"
-        android:weightSum="3">
-
-        <Button
-            android:id="@+id/tab_watchlist"
-            style="?android:attr/buttonBarButtonStyle"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:background="@android:color/transparent"
-            android:text="WatchList"
-            android:textColor="#FFFFFF"
-            android:textSize="13sp" />
+        android:weightSum="2">
 
         <Button
             android:id="@+id/tab_mystuff"

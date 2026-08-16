@@ -1,11 +1,14 @@
 package com.tvtime.app
 
 import android.app.PendingIntent
+import android.app.WallpaperManager
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.content.res.ColorStateList
+import android.os.Build
 import android.widget.RemoteViews
 
 class TVTimeWidgetProvider : AppWidgetProvider() {
@@ -56,11 +59,16 @@ class TVTimeWidgetProvider : AppWidgetProvider() {
         val density = context.resources.displayMetrics.density
 
         val isLiquid = GlassBitmapRenderer.isLiquid(prefs.glassPreset)
+
+        val dynamicColor = resolveDynamicAccent(context, prefs)
+        val accent = dynamicColor ?: (ColorUtils.parseArgb(prefs.accentHexColor) ?: ACCENT)
+        val borderHex = dynamicColor?.let { ColorUtils.toArgbHex(it) } ?: prefs.borderHexColor
+
         val glass = GlassBitmapRenderer.renderLauncherContainer(
             widthPx = WIDGET_WIDTH_PX,
             heightPx = WIDGET_HEIGHT_PX,
             bgHex = prefs.bgHexColor,
-            borderHex = prefs.borderHexColor,
+            borderHex = borderHex,
             cornerRadiusDp = prefs.cornerRadius,
             borderThicknessDp = prefs.borderThickness,
             alphaPercent = prefs.bgBlurOpacity,
@@ -70,7 +78,6 @@ class TVTimeWidgetProvider : AppWidgetProvider() {
         )
         views.setImageViewBitmap(R.id.iv_widget_bg, glass)
 
-        val accent = ColorUtils.parseArgb(prefs.accentHexColor) ?: ACCENT
         views.setTextColor(R.id.tv_widget_header, accent)
 
         val watchIntent = Intent(context, WatchDetailsActivity::class.java)
@@ -89,5 +96,19 @@ class TVTimeWidgetProvider : AppWidgetProvider() {
         views.setEmptyView(R.id.list_mystuff, R.id.tv_empty_p2)
 
         appWidgetManager.updateAppWidget(appWidgetId, views)
+    }
+
+    /** Material You: on Android 12+ with dynamic color enabled, derive the accent from the
+     * system wallpaper (primary color). Returns null when dynamic isn't available. */
+    private fun resolveDynamicAccent(context: Context, prefs: WidgetPreferences): Int? {
+        if (!prefs.useDynamicColor) return null
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return null
+        return try {
+            val wm = context.getSystemService(Context.WALLPAPER_SERVICE) as WallpaperManager
+            val colors = wm.getWallpaperColors(WallpaperManager.FLAG_SYSTEM)
+            colors?.primaryColor?.toArgb()
+        } catch (_: Exception) {
+            null
+        }
     }
 }

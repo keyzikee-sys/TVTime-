@@ -4,9 +4,11 @@ import android.appwidget.AppWidgetManager
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.app.WallpaperManager
 import android.graphics.Color
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.GradientDrawable
+import android.os.Build
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
@@ -83,6 +85,21 @@ class WidgetConfigFragment : Fragment() {
         val btnTubiSync = view.findViewById<Button>(R.id.btn_tubi_sync)
         val tvTubiSyncStatus = view.findViewById<TextView>(R.id.tv_tubi_sync_status)
 
+        val switchSource = view.findViewById<Switch>(R.id.switch_source)
+        val containerTubi = view.findViewById<View>(R.id.container_tubi_account)
+        val containerCatalog = view.findViewById<View>(R.id.container_catalog)
+        val switchDynamic = view.findViewById<Switch>(R.id.switch_dynamic_color)
+
+        fun applySource(useLogin: Boolean) {
+            containerTubi?.visibility = if (useLogin) View.VISIBLE else View.GONE
+            containerCatalog?.visibility = if (useLogin) View.GONE else View.VISIBLE
+        }
+        switchSource?.isChecked = true
+        applySource(true)
+        switchSource?.setOnCheckedChangeListener { _: CompoundButton?, checked: Boolean ->
+            applySource(checked)
+        }
+
         fun refreshTubiUi() {
             if (TubiAccount.isLoggedIn()) {
                 tvTubiStatus?.text = "Signed in as ${TubiAccount.email()}"
@@ -131,11 +148,11 @@ class WidgetConfigFragment : Fragment() {
                     val wlCount = finalWatchlist?.size ?: 0
                     val msCount = ms?.size ?: 0
                     WatchlistStore.init(requireContext())
-                    finalWatchlist?.let { WatchlistStore.saveWatchlist(it) }
+                    finalWatchlist?.let { WatchlistStore.saveMyStuff(it) }
                     ms?.let { WatchlistStore.saveMyStuff(it) }
                     TVTimeWidgetProvider.updateAll(requireContext())
                     tvTubiSyncStatus?.text = buildString {
-                        append("Synced: $wlCount in WatchList")
+                        append("Synced: $wlCount in Syncing")
                         when {
                             wl != null -> append(" (continue-watching)")
                             recommendations != null -> append(" (recommended)")
@@ -209,9 +226,9 @@ class WidgetConfigFragment : Fragment() {
                             tvCatalogStatus?.text = "No items found in response"
                         } else {
                             WatchlistStore.init(requireContext())
-                            WatchlistStore.saveWatchlist(items)
+                            WatchlistStore.saveMyStuff(items)
                             TVTimeWidgetProvider.updateAll(requireContext())
-                            tvCatalogStatus?.text = "Loaded ${items.size} titles into WatchList"
+                            tvCatalogStatus?.text = "Loaded ${items.size} titles into Syncing"
                         }
                     }
                 } catch (e: Exception) {
@@ -268,11 +285,23 @@ class WidgetConfigFragment : Fragment() {
                 gradient = isLiquidSelected(rgPresets)
             )
             previewCard?.background = BitmapDrawable(requireContext().resources, glass)
-            val accent = ColorUtils.parseArgb(currentAccentHex) ?: Color.parseColor("#FFFF1493")
+            val accent = if (prefs.useDynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                val wm = requireContext().getSystemService(Context.WALLPAPER_SERVICE) as WallpaperManager
+                wm.getWallpaperColors(WallpaperManager.FLAG_SYSTEM)?.primaryColor?.toArgb()
+                    ?: (ColorUtils.parseArgb(currentAccentHex) ?: Color.parseColor("#FFFF1493"))
+            } else {
+                ColorUtils.parseArgb(currentAccentHex) ?: Color.parseColor("#FFFF1493")
+            }
             tvPreviewTitle?.setTextColor(accent)
         }
 
         refreshLivePreview()
+
+        switchDynamic?.isChecked = prefs.useDynamicColor
+        switchDynamic?.setOnCheckedChangeListener { _: CompoundButton?, checked: Boolean ->
+            prefs.useDynamicColor = checked
+            refreshLivePreview()
+        }
 
         fun applyPreset(name: String) {
             val preset = GlassPresets[name] ?: return
@@ -435,7 +464,7 @@ class WidgetConfigFragment : Fragment() {
                 Toast.makeText(ctx, "Widget Customization Saved & Updated!", Toast.LENGTH_SHORT).show()
             }
 
-            // Auto-populate WatchList with Tubi recommendations so the widget isn't empty.
+            // Auto-populate Syncing with Tubi recommendations so the widget isn't empty.
             val acUrl = etCatalogUrl?.text?.toString()?.trim() ?: ""
             val acKey = etCatalogKey?.text?.toString()?.trim() ?: ""
             if (acUrl.isNotEmpty() && acKey.isNotEmpty()) {
@@ -444,7 +473,7 @@ class WidgetConfigFragment : Fragment() {
                         val recs = loadRecommendationsCatalog(acUrl, acKey)
                         if (!recs.isNullOrEmpty()) {
                             WatchlistStore.init(ctx)
-                            WatchlistStore.saveWatchlist(recs)
+                            WatchlistStore.saveMyStuff(recs)
                             TVTimeWidgetProvider.updateAll(ctx)
                         }
                     } catch (_: Exception) {
@@ -512,7 +541,7 @@ class WidgetConfigFragment : Fragment() {
     }
 
     private fun loadTubiCatalog(rawUrl: String, key: String): List<ShowItem>? {
-        // WatchList is Tubi's "Recommended for you" section by default.
+        // Syncing is Tubi's "Recommended for you" section by default.
         val rec = loadRecommendationsCatalog(rawUrl, key)
         if (rec != null && rec.isNotEmpty()) return rec
         // Fallback: merge a handful of general categories (excluding recommendation-style rows).

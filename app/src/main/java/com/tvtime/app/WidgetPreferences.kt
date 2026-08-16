@@ -31,11 +31,19 @@ class WidgetPreferences(context: Context, private val widgetId: Int = DEFAULT_ID
         return prefs.getInt("default_$base", def)
     }
 
+    private fun getBoolean(base: String, def: Boolean): Boolean {
+        if (prefs.contains(sp(base))) return prefs.getBoolean(sp(base), def)
+        return prefs.getBoolean("default_$base", def)
+    }
+
     private fun putString(base: String, value: String) =
         prefs.edit().putString(sp(base), value).apply()
 
     private fun putInt(base: String, value: Int) =
         prefs.edit().putInt(sp(base), value).apply()
+
+    private fun putBoolean(base: String, value: Boolean) =
+        prefs.edit().putBoolean(sp(base), value).apply()
 
     var glassPreset: String
         get() = getString(KEY_PRESET, GlassBitmapRenderer.PRESET_LIGHT)
@@ -76,6 +84,12 @@ class WidgetPreferences(context: Context, private val widgetId: Int = DEFAULT_ID
     var selectedServicePackage: String
         get() = getString(KEY_SERVICE, "com.tubitv")
         set(value) = putString(KEY_SERVICE, value)
+
+    /** When true (and the device is Android 12+), the widget tints its accent + border
+     * from the system wallpaper (Material You dynamic color) instead of the saved accent. */
+    var useDynamicColor: Boolean
+        get() = getBoolean(KEY_DYNAMIC, true)
+        set(value) = putBoolean(KEY_DYNAMIC, value)
 
     var currentPage: Int
         get() = getInt(KEY_CURRENT_PAGE, 0).coerceIn(0, 1)
@@ -121,6 +135,7 @@ class WidgetPreferences(context: Context, private val widgetId: Int = DEFAULT_ID
         private const val KEY_BORDER_HEX = "border_hex_color"
         private const val KEY_CURRENT_PAGE = "current_page"
         private const val KEY_SERVICE = "selected_service_package"
+        private const val KEY_DYNAMIC = "use_dynamic_color"
     }
 }
 
