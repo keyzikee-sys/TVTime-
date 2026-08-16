@@ -16,11 +16,13 @@ class MainActivity : AppCompatActivity() {
         WatchlistStore.init(this)
 
         val myStuffTab = findViewById<Button>(R.id.tab_mystuff)
+        val syncingTab = findViewById<Button>(R.id.tab_syncing)
         val configTab = findViewById<Button>(R.id.tab_config)
-        tabs = listOf(myStuffTab, configTab)
+        tabs = listOf(myStuffTab, syncingTab, configTab)
 
         val fragments = listOf(
             MyStuffFragment(),
+            SyncingFragment(),
             WidgetConfigFragment()
         )
 
@@ -30,7 +32,8 @@ class MainActivity : AppCompatActivity() {
         }
 
         myStuffTab.setOnClickListener { onTabClick(0) }
-        configTab.setOnClickListener { onTabClick(1) }
+        syncingTab.setOnClickListener { onTabClick(1) }
+        configTab.setOnClickListener { onTabClick(2) }
 
         if (savedInstanceState == null) {
             selectTab(0)

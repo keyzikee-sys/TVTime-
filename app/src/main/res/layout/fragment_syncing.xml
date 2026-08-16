@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#0F0C1B"
+    android:padding="16dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Tubi Account"
+            android:textColor="#00F2FE"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp" />
+
+        <EditText
+            android:id="@+id/et_tubi_email"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Tubi email"
+            android:inputType="textEmailAddress"
+            android:textColor="#FFFFFF"
+            android:textColorHint="#88FFFFFF"
+            android:background="#22FFFFFF"
+            android:padding="12dp"
+            android:layout_marginBottom="8dp" />
+
+        <EditText
+            android:id="@+id/et_tubi_pass"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Tubi password"
+            android:inputType="textPassword"
+            android:textColor="#FFFFFF"
+            android:textColorHint="#88FFFFFF"
+            android:background="#22FFFFFF"
+            android:padding="12dp"
+            android:layout_marginBottom="8dp" />
+
+        <Button
+            android:id="@+id/btn_tubi_login"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Sign in to Tubi"
+            android:textColor="#0F0C1B"
+            android:textStyle="bold"
+            android:backgroundTint="#00F2FE"
+            android:layout_marginBottom="6dp" />
+
+        <TextView
+            android:id="@+id/tv_tubi_status"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Not signed in"
+            android:textColor="#B0B0B0"
+            android:textSize="13sp"
+            android:layout_marginBottom="6dp" />
+
+        <Button
+            android:id="@+id/btn_tubi_sync"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Sync my Tubi (continue-watching + my list)"
+            android:textColor="#0F0C1B"
+            android:textStyle="bold"
+            android:backgroundTint="#FF1493"
+            android:layout_marginBottom="6dp" />
+
+        <TextView
+            android:id="@+id/tv_tubi_sync_status"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text=""
+            android:textColor="#B0B0B0"
+            android:textSize="13sp"
+            android:layout_marginBottom="16dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Catalog Data (optional)"
+            android:textColor="#00F2FE"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp" />
+
+        <EditText
+            android:id="@+id/et_catalog_url"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="parse.bot scraper base URL (e.g. https://api.parse.bot/scraper/&lt;id&gt;)"
+            android:inputType="textUri"
+            android:textColor="#FFFFFF"
+            android:textColorHint="#88FFFFFF"
+            android:background="#22FFFFFF"
+            android:padding="12dp"
+            android:layout_marginBottom="8dp" />
+
+        <EditText
+            android:id="@+id/et_catalog_key"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="API Key"
+            android:inputType="text"
+            android:textColor="#FFFFFF"
+            android:textColorHint="#88FFFFFF"
+            android:background="#22FFFFFF"
+            android:padding="12dp"
+            android:layout_marginBottom="8dp" />
+
+        <Button
+            android:id="@+id/btn_load_catalog"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Load catalog into My Stuff"
+            android:textColor="#0F0C1B"
+            android:textStyle="bold"
+            android:backgroundTint="#FF1493"
+            android:layout_marginBottom="6dp" />
+
+        <TextView
+            android:id="@+id/tv_catalog_status"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Not loaded"
+            android:textColor="#B0B0B0"
+            android:textSize="13sp"
+            android:layout_marginBottom="16dp" />
+
+    </LinearLayout>
+</ScrollView>
