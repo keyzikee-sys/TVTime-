@@ -11,12 +11,12 @@ import java.io.OutputStreamWriter
  * Best-effort Tubi account/session handling.
  *
  * Tubi has no official API. Login is `POST https://tubitv.com/oz/auth/login/` (email + password)
- * which returns a `connect.sid` session cookie. Personal-library endpoints (watchlist, continue
- * watching) are wrapped in HMAC-signed requests and are not reliably callable, so this only stores
- * the session and, if the login response carries an access token / user id, those too. Everything
- * is best-effort: if a later fetch fails we simply fall back to the curated list.
+ * which returns a `connect.sid` session cookie. Modern Tubi protects that POST with CSRF, so we
+ * first GET the login page to obtain the CSRF cookie/token, then replay it on the login POST.
+ * Personal-library endpoints remain HMAC-signed and are not reliably callable; on any failure we
+ * fall back to the curated list.
  *
- * Note: we store only the session cookie + access token, never the user's password.
+ * We store only the session cookie + access token, never the user's password.
  */
 object TubiAccount {
     private const val PREFS = "TVTimeTubiAccount"
@@ -24,6 +24,8 @@ object TubiAccount {
     private const val KEY_AT = "access_token"
     private const val KEY_UID = "user_id"
     private const val KEY_EMAIL = "email"
+
+    private const val UA = "Mozilla/5.0 (Linux; Android 12) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Mobile"
 
     private lateinit var prefs: SharedPreferences
 
@@ -45,18 +47,23 @@ object TubiAccount {
     fun login(email: String, password: String, callback: (Boolean, String?) -> Unit) {
         Thread {
             try {
+                val (cookies, csrf) = fetchCsrf()
+
                 val conn = URL("https://tubitv.com/oz/auth/login/").openConnection() as HttpURLConnection
                 conn.requestMethod = "POST"
                 conn.setRequestProperty("Content-Type", "application/json")
                 conn.setRequestProperty("Accept", "application/json")
-                conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android 12) AppleWebKit/537.36")
+                conn.setRequestProperty("User-Agent", UA)
                 conn.setRequestProperty("Origin", "https://tubitv.com")
                 conn.setRequestProperty("Referer", "https://tubitv.com/login")
+                if (cookies.isNotEmpty()) conn.setRequestProperty("Cookie", cookies)
+                if (csrf.isNotEmpty()) conn.setRequestProperty("X-CSRF-Token", csrf)
                 conn.doOutput = true
 
                 val body = JSONObject().apply {
                     put("username", email)
                     put("password", password)
+                    if (csrf.isNotEmpty()) put("_csrf", csrf)
                 }.toString()
                 OutputStreamWriter(conn.outputStream).use { it.write(body) }
 
@@ -93,5 +100,41 @@ object TubiAccount {
                 callback(false, e.message ?: "Network error")
             }
         }.start()
+    }
+
+    private fun fetchCsrf(): Pair<String, String> {
+        return try {
+            val conn = URL("https://tubitv.com/login").openConnection() as HttpURLConnection
+            conn.requestMethod = "GET"
+            conn.setRequestProperty("User-Agent", UA)
+            conn.setRequestProperty("Accept", "text/html")
+            val code = conn.responseCode
+            val cookies = conn.headerFields["Set-Cookie"]
+                ?.joinToString("; ") { it.split(";").first() } ?: ""
+            val html = try {
+                conn.inputStream.bufferedReader().readText()
+            } catch (_: Exception) {
+                ""
+            }
+            conn.disconnect()
+            if (code !in 200..399) return "" to ""
+            cookies to extractCsrf(html)
+        } catch (e: Exception) {
+            "" to ""
+        }
+    }
+
+    private fun extractCsrf(html: String): String {
+        val patterns = listOf(
+            """<meta[^>]+name=["']csrf-token["'][^>]+content=["']([^"']+)["']""",
+            """<meta[^>]+content=["']([^"']+)["'][^>]+name=["']csrf-token["']""",
+            """name=["']_csrf["'][^>]+value=["']([^"']+)["']""",
+            """value=["']([^"']+)["'][^>]+name=["']_csrf["']""",
+            """__CSRF__\s*=\s*["']([^"']+)["']"""
+        )
+        for (p in patterns) {
+            Regex(p, RegexOption.IGNORE_CASE).find(html)?.groupValues?.get(1)?.let { return it }
+        }
+        return ""
     }
 }
