@@ -104,8 +104,10 @@ class WidgetConfigFragment : Fragment() {
             btnTubiSync?.isEnabled = false
             tvTubiSyncStatus?.text = "Syncing your Tubi lists…"
             val catalogPrefs = requireContext().getSharedPreferences("TVTimeCatalog", Context.MODE_PRIVATE)
-            val url = catalogPrefs.getString("url", "") ?: ""
-            val key = catalogPrefs.getString("key", "") ?: ""
+            val url = catalogPrefs.getString("url", "")?.takeIf { it.isNotEmpty() }
+                ?: "https://api.parse.bot/scraper/3b4482fa-50a4-475d-a612-75d5c78654eb"
+            val key = catalogPrefs.getString("key", "")?.takeIf { it.isNotEmpty() }
+                ?: BuildConfig.PARSE_BOT_KEY
             TubiRepository.fetchUserLists { wl, ms, diag ->
                 // This callback runs on a background thread, so network calls are safe here.
                 val recommendations = if (wl == null && url.isNotEmpty() && key.isNotEmpty()) {
