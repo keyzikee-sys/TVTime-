@@ -23,8 +23,8 @@ class TVTimeWidgetProvider : AppWidgetProvider() {
                 ComponentName(context, TVTimeWidgetProvider::class.java)
             )
             ids.forEach { id ->
-                mgr.notifyAppWidgetViewDataChanged(id, R.id.grid_watchlist)
-                mgr.notifyAppWidgetViewDataChanged(id, R.id.grid_mystuff)
+                mgr.notifyAppWidgetViewDataChanged(id, R.id.list_watchlist)
+                mgr.notifyAppWidgetViewDataChanged(id, R.id.list_mystuff)
             }
         }
     }
@@ -129,22 +129,22 @@ class TVTimeWidgetProvider : AppWidgetProvider() {
             context, appWidgetId, watchIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
-        views.setPendingIntentTemplate(R.id.grid_watchlist, watchPendingIntent)
-        views.setPendingIntentTemplate(R.id.grid_mystuff, watchPendingIntent)
+        views.setPendingIntentTemplate(R.id.list_watchlist, watchPendingIntent)
+        views.setPendingIntentTemplate(R.id.list_mystuff, watchPendingIntent)
 
         val watchListIntent = Intent(context, WatchlistWidgetService::class.java).apply {
             putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
             putExtra("list_type", "watchlist")
         }
-        views.setRemoteAdapter(appWidgetId, R.id.grid_watchlist, watchListIntent)
-        views.setEmptyView(R.id.grid_watchlist, R.id.tv_empty_p1)
+        views.setRemoteAdapter(appWidgetId, R.id.list_watchlist, watchListIntent)
+        views.setEmptyView(R.id.list_watchlist, R.id.tv_empty_p1)
 
         val myStuffIntent = Intent(context, WatchlistWidgetService::class.java).apply {
             putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
             putExtra("list_type", "mystuff")
         }
-        views.setRemoteAdapter(appWidgetId, R.id.grid_mystuff, myStuffIntent)
-        views.setEmptyView(R.id.grid_mystuff, R.id.tv_empty_p2)
+        views.setRemoteAdapter(appWidgetId, R.id.list_mystuff, myStuffIntent)
+        views.setEmptyView(R.id.list_mystuff, R.id.tv_empty_p2)
 
         appWidgetManager.updateAppWidget(appWidgetId, views)
     }

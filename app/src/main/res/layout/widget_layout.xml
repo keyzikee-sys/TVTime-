@@ -59,16 +59,14 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent">
 
-                <GridView
-                    android:id="@+id/grid_watchlist"
+                <ListView
+                    android:id="@+id/list_watchlist"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:numColumns="2"
-                    android:verticalSpacing="6dp"
-                    android:horizontalSpacing="6dp"
-                    android:stretchMode="spacingWidth"
-                    android:scrollbars="none"
-                    android:gravity="center" />
+                    android:layout_marginTop="4dp"
+                    android:divider="@android:color/transparent"
+                    android:dividerHeight="6dp"
+                    android:scrollbars="none" />
 
                 <TextView
                     android:id="@+id/tv_empty_p1"
@@ -85,16 +83,14 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent">
 
-                <GridView
-                    android:id="@+id/grid_mystuff"
+                <ListView
+                    android:id="@+id/list_mystuff"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:numColumns="2"
-                    android:verticalSpacing="6dp"
-                    android:horizontalSpacing="6dp"
-                    android:stretchMode="spacingWidth"
-                    android:scrollbars="none"
-                    android:gravity="center" />
+                    android:layout_marginTop="4dp"
+                    android:divider="@android:color/transparent"
+                    android:dividerHeight="6dp"
+                    android:scrollbars="none" />
 
                 <TextView
                     android:id="@+id/tv_empty_p2"
