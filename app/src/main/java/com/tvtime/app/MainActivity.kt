@@ -12,6 +12,7 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        TubiAccount.init(this)
 
         val watchListTab = findViewById<Button>(R.id.tab_watchlist)
         val myStuffTab = findViewById<Button>(R.id.tab_mystuff)

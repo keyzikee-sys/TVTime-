@@ -17,15 +17,23 @@ class MyStuffFragment : Fragment() {
         val view = inflater.inflate(R.layout.fragment_mystuff, container, false)
         val recycler = view.findViewById<RecyclerView>(R.id.rv_mystuff)
         recycler?.layoutManager = LinearLayoutManager(requireContext())
-        recycler?.adapter = ShowListAdapter(
-            listOf(
-                ShowItem("The Boys", "Saved · S3 · E8", 0),
-                ShowItem("Peaky Blinders", "In Library · S6 · E6", 0),
-                ShowItem("Foundation", "Downloaded · S2 · E1", 0),
-                ShowItem("Invincible", "Saved · S1 · E8", 0),
-                ShowItem("Shadow and Bone", "In Library · S2 · E4", 0)
-            )
+        val fallback = listOf(
+            ShowItem("The Boys", "Saved · S3 · E8", 0),
+            ShowItem("Peaky Blinders", "In Library · S6 · E6", 0),
+            ShowItem("Foundation", "Downloaded · S2 · E1", 0),
+            ShowItem("Invincible", "Saved · S1 · E8", 0),
+            ShowItem("Shadow and Bone", "In Library · S2 · E4", 0)
         )
+        recycler?.adapter = ShowListAdapter(fallback)
+
+        if (TubiAccount.isLoggedIn()) {
+            TubiRepository.fetchMyStuff { items ->
+                val list = items ?: fallback
+                recycler?.post {
+                    recycler.adapter = ShowListAdapter(list)
+                }
+            }
+        }
         return view
     }
 }

@@ -30,6 +30,15 @@ class WatchListFragment : Fragment() {
         recycler?.layoutManager = LinearLayoutManager(requireContext())
         recycler?.adapter = ShowListAdapter(sampleShows())
 
+        if (TubiAccount.isLoggedIn()) {
+            TubiRepository.fetchWatchlist { items ->
+                val list = items ?: sampleShows()
+                recycler?.post {
+                    recycler.adapter = ShowListAdapter(list)
+                }
+            }
+        }
+
         return view
     }
 

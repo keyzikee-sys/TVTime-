@@ -13,6 +13,58 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:text="Tubi Account"
+            android:textColor="#00F2FE"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp" />
+
+        <EditText
+            android:id="@+id/et_tubi_email"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Tubi email"
+            android:inputType="textEmailAddress"
+            android:textColor="#FFFFFF"
+            android:textColorHint="#88FFFFFF"
+            android:background="#22FFFFFF"
+            android:padding="12dp"
+            android:layout_marginBottom="8dp" />
+
+        <EditText
+            android:id="@+id/et_tubi_pass"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Tubi password"
+            android:inputType="textPassword"
+            android:textColor="#FFFFFF"
+            android:textColorHint="#88FFFFFF"
+            android:background="#22FFFFFF"
+            android:padding="12dp"
+            android:layout_marginBottom="8dp" />
+
+        <Button
+            android:id="@+id/btn_tubi_login"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Sign in to Tubi"
+            android:textColor="#0F0C1B"
+            android:textStyle="bold"
+            android:backgroundTint="#00F2FE"
+            android:layout_marginBottom="6dp" />
+
+        <TextView
+            android:id="@+id/tv_tubi_status"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Not signed in"
+            android:textColor="#B0B0B0"
+            android:textSize="13sp"
+            android:layout_marginBottom="16dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:text="Widget Customization"
             android:textColor="#00F2FE"
             android:textSize="22sp"

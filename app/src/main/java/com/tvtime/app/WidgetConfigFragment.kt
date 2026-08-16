@@ -79,6 +79,56 @@ class WidgetConfigFragment : Fragment() {
         val tvCornerRadius = view.findViewById<TextView>(R.id.tv_corner_radius_label)
         val btnSave = view.findViewById<Button>(R.id.btn_save_config)
 
+        // --- Tubi account (best-effort personalized data) ---
+        TubiAccount.init(requireContext())
+        val etEmail = view.findViewById<EditText>(R.id.et_tubi_email)
+        val etPass = view.findViewById<EditText>(R.id.et_tubi_pass)
+        val btnTubiLogin = view.findViewById<Button>(R.id.btn_tubi_login)
+        val tvTubiStatus = view.findViewById<TextView>(R.id.tv_tubi_status)
+
+        fun refreshTubiUi() {
+            if (TubiAccount.isLoggedIn()) {
+                tvTubiStatus?.text = "Signed in as ${TubiAccount.email()}"
+                btnTubiLogin?.text = "Sign out"
+                etEmail?.isEnabled = false
+                etPass?.isEnabled = false
+            } else {
+                tvTubiStatus?.text = "Not signed in (showing sample list)"
+                btnTubiLogin?.text = "Sign in to Tubi"
+                etEmail?.isEnabled = true
+                etPass?.isEnabled = true
+            }
+        }
+        refreshTubiUi()
+
+        btnTubiLogin?.setOnClickListener {
+            if (TubiAccount.isLoggedIn()) {
+                TubiAccount.signOut()
+                etEmail?.text?.clear()
+                etPass?.text?.clear()
+                refreshTubiUi()
+                return@setOnClickListener
+            }
+            val email = etEmail?.text?.toString()?.trim() ?: ""
+            val pass = etPass?.text?.toString() ?: ""
+            if (email.isEmpty() || pass.isEmpty()) {
+                tvTubiStatus?.text = "Enter email and password"
+                return@setOnClickListener
+            }
+            btnTubiLogin.isEnabled = false
+            tvTubiStatus?.text = "Signing in…"
+            TubiAccount.login(email, pass) { ok, err ->
+                requireActivity().runOnUiThread {
+                    btnTubiLogin.isEnabled = true
+                    if (ok) {
+                        refreshTubiUi()
+                    } else {
+                        tvTubiStatus?.text = "Sign-in failed: ${err ?: "unknown error"}"
+                    }
+                }
+            }
+        }
+
         currentBgHex = prefs.bgHexColor
         currentAccentHex = prefs.accentHexColor
         currentStrokeHex = prefs.borderHexColor
