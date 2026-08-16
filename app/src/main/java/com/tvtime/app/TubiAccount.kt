@@ -94,7 +94,8 @@ object TubiAccount {
                     }
                     callback(true, null)
                 } else {
-                    callback(false, "Login failed (HTTP $code)")
+                    val msg = try { JSONObject(resp).optString("message", "Login failed (HTTP $code)") } catch (_: Exception) { "Login failed (HTTP $code)" }
+                    callback(false, msg)
                 }
             } catch (e: Exception) {
                 callback(false, e.message ?: "Network error")
