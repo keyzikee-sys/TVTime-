@@ -4,7 +4,11 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Canvas
 import android.graphics.Color
+import android.graphics.Paint
+import android.graphics.Path
+import android.graphics.RectF
 import android.os.Bundle
 import android.widget.RemoteViews
 import android.widget.RemoteViewsService
@@ -84,6 +88,17 @@ class WatchlistRemoteViewsFactory(
     override fun hasStableIds(): Boolean = false
 }
 
+private fun roundCorners(bmp: Bitmap, radiusPx: Float): Bitmap {
+    val out = Bitmap.createBitmap(bmp.width, bmp.height, Bitmap.Config.ARGB_8888)
+    val canvas = Canvas(out)
+    val paint = Paint(Paint.ANTI_ALIAS_FLAG)
+    val rect = RectF(0f, 0f, bmp.width.toFloat(), bmp.height.toFloat())
+    val path = Path().apply { addRoundRect(rect, radiusPx, radiusPx, Path.Direction.CW) }
+    canvas.clipPath(path)
+    canvas.drawBitmap(bmp, 0f, 0f, paint)
+    return out
+}
+
 private fun downloadBitmap(url: String): Bitmap? {
     return try {
         val conn = URL(url).openConnection() as HttpURLConnection
@@ -91,10 +106,12 @@ private fun downloadBitmap(url: String): Bitmap? {
         conn.readTimeout = 10000
         conn.doInput = true
         conn.connect()
-        val bmp = BitmapFactory.decodeStream(conn.inputStream) ?: return null
-        val scaled = Bitmap.createScaledBitmap(bmp, 100, 150, true)
-        if (scaled != bmp) bmp.recycle()
-        scaled
+            val bmp = BitmapFactory.decodeStream(conn.inputStream) ?: return null
+            val scaled = Bitmap.createScaledBitmap(bmp, 100, 150, true)
+            if (scaled != bmp) bmp.recycle()
+            val rounded = roundCorners(scaled, 14f)
+            if (rounded != scaled) scaled.recycle()
+            rounded
     } catch (_: Exception) {
         null
     }

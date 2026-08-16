@@ -110,9 +110,15 @@ class WidgetConfigFragment : Fragment() {
                 ?: BuildConfig.PARSE_BOT_KEY
             TubiRepository.fetchUserLists { wl, ms, diag ->
                 // This callback runs on a background thread, so network calls are safe here.
-                val recommendations = if (wl == null && url.isNotEmpty() && key.isNotEmpty()) {
-                    try { loadRecommendationsCatalog(url, key) } catch (_: Exception) { null }
-                } else null
+                val recResult = if (wl == null && url.isNotEmpty() && key.isNotEmpty()) {
+                    try {
+                        loadRecommendationsCatalog(url, key) to null
+                    } catch (e: Exception) {
+                        null to (e.message ?: e.javaClass.simpleName)
+                    }
+                } else null to null
+                val recommendations = recResult.first
+                val recErr = recResult.second
                 requireActivity().runOnUiThread {
                     btnTubiSync?.isEnabled = true
                     if (wl == null && ms == null && recommendations == null) {
@@ -128,7 +134,12 @@ class WidgetConfigFragment : Fragment() {
                     TVTimeWidgetProvider.notifyDataChanged(requireContext())
                     tvTubiSyncStatus?.text = buildString {
                         append("Synced: $wlCount in WatchList")
-                        if (wl == null && recommendations != null) append(" (recommended)")
+                        when {
+                            wl != null -> append(" (continue-watching)")
+                            recommendations != null -> append(" (recommended)")
+                            recErr != null -> append(" (recs err: $recErr)")
+                            else -> append(" (no recs: key/url empty?)")
+                        }
                         append(", $msCount saved.")
                     }
                 }
