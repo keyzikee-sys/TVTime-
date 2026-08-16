@@ -62,7 +62,7 @@ object WatchlistStore {
                 }
             )
         }
-        prefs.edit().putString(key, arr.toString()).apply()
+        prefs.edit().putString(key, arr.toString()).commit()
     }
 
     private fun seedWatch() = listOf(

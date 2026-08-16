@@ -104,10 +104,26 @@ object TubiRepository {
             val subtitle = if (year > 0) "$year · $dtype" else dtype
             val thumbs = o.optJSONArray("thumbnails")
             val imageUrl = if (thumbs != null && thumbs.length() > 0) thumbs.optString(0, "") else ""
-            val watchUrl = "https://tubitv.com/movies/$id"
+            val watchUrl = resolveTubiUrl(o, id)
             map[id] = ShowItem(title, subtitle, 0, imageUrl, watchUrl)
         }
         return map
+    }
+
+    /** Builds the correct Tubi deep link for a content object. Prefers the API's own path/url
+     * field (which handles movies, series and episodes correctly); falls back to /movies/<id>. */
+    private fun resolveTubiUrl(o: JSONObject, id: Int): String {
+        for (field in listOf("url", "canonical_url", "share_url", "full_path", "path")) {
+            val raw = o.optString(field, "").trim()
+            if (raw.isNotEmpty()) {
+                val lower = raw.lowercase()
+                if (lower.startsWith("http")) return raw
+                if (lower.startsWith("/")) return "https://tubitv.com$raw"
+            }
+        }
+        val slug = o.optString("slug", "").trim()
+        if (slug.isNotEmpty()) return "https://tubitv.com/$slug-$id"
+        return "https://tubitv.com/movies/$id"
     }
 
     private fun tryGetPlain(url: String): String? {

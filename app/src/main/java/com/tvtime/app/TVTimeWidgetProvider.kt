@@ -38,6 +38,13 @@ class TVTimeWidgetProvider : AppWidgetProvider() {
                 TVTimeWidgetProvider().updateWidget(context, mgr, it)
                 mgr.notifyAppWidgetViewDataChanged(it, R.id.list_mystuff)
             }
+            // Belt-and-suspenders: also push a full APPWIDGET_UPDATE so launchers that
+            // cache the collection re-bind it from scratch.
+            val intent = Intent(context, TVTimeWidgetProvider::class.java).apply {
+                action = AppWidgetManager.ACTION_APPWIDGET_UPDATE
+                putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, ids)
+            }
+            context.sendBroadcast(intent)
         }
     }
 
