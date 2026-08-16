@@ -18,89 +18,34 @@
         android:layout_height="match_parent"
         android:orientation="vertical">
 
-        <LinearLayout
-            android:id="@+id/widget_header"
+        <TextView
+            android:id="@+id/tv_widget_header"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:paddingBottom="4dp">
+            android:text="My Stuff"
+            android:textColor="#4DD0E1"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            android:paddingBottom="4dp" />
 
-            <TextView
-                android:id="@+id/tv_tab_watchlist"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:gravity="center"
-                android:text="WatchList"
-                android:textSize="13sp"
-                android:textStyle="bold"
-                android:clickable="true" />
-
-            <TextView
-                android:id="@+id/tv_tab_mystuff"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:gravity="center"
-                android:text="My Stuff"
-                android:textSize="13sp"
-                android:textStyle="bold"
-                android:clickable="true" />
-        </LinearLayout>
-
-        <ViewFlipper
-            android:id="@+id/view_flipper"
+        <ListView
+            android:id="@+id/list_mystuff"
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_weight="1">
+            android:layout_weight="1"
+            android:layout_marginTop="4dp"
+            android:divider="@android:color/transparent"
+            android:dividerHeight="6dp"
+            android:scrollbars="none" />
 
-            <FrameLayout
-                android:id="@+id/widget_page_1"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent">
-
-                <ListView
-                    android:id="@+id/list_watchlist"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:layout_marginTop="4dp"
-                    android:divider="@android:color/transparent"
-                    android:dividerHeight="6dp"
-                    android:scrollbars="none" />
-
-                <TextView
-                    android:id="@+id/tv_empty_p1"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:gravity="center"
-                    android:text="No shows yet — add in the app"
-                    android:textColor="#B8C0CC"
-                    android:textSize="12sp" />
-            </FrameLayout>
-
-            <FrameLayout
-                android:id="@+id/widget_page_2"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent">
-
-                <ListView
-                    android:id="@+id/list_mystuff"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:layout_marginTop="4dp"
-                    android:divider="@android:color/transparent"
-                    android:dividerHeight="6dp"
-                    android:scrollbars="none" />
-
-                <TextView
-                    android:id="@+id/tv_empty_p2"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:gravity="center"
-                    android:text="Nothing saved yet — add in the app"
-                    android:textColor="#B8C0CC"
-                    android:textSize="12sp" />
-            </FrameLayout>
-        </ViewFlipper>
+        <TextView
+            android:id="@+id/tv_empty_p2"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="Nothing saved yet — add in the app"
+            android:textColor="#B8C0CC"
+            android:textSize="12sp" />
     </LinearLayout>
 </FrameLayout>
