@@ -31,7 +31,7 @@ class MyStuffFragment : Fragment() {
         adapter = ShowListAdapter(list) { item ->
             list.remove(item)
             WatchlistStore.saveMyStuff(list)
-            TVTimeWidgetProvider.notifyDataChanged(requireContext())
+            TVTimeWidgetProvider.updateAll(requireContext())
             adapter?.notifyDataSetChanged()
         }
         val recycler = view.findViewById<RecyclerView>(R.id.rv_mystuff)
@@ -66,7 +66,7 @@ class MyStuffFragment : Fragment() {
                 val subtitle = etSubtitle?.text?.toString()?.trim() ?: ""
                 list.add(0, ShowItem(title, subtitle, seek?.progress ?: 0))
                 onSave(list)
-                TVTimeWidgetProvider.notifyDataChanged(requireContext())
+                TVTimeWidgetProvider.updateAll(requireContext())
                 adapter?.notifyDataSetChanged()
             }
             .setNegativeButton("Cancel", null)

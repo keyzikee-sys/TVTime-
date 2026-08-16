@@ -27,6 +27,16 @@ class TVTimeWidgetProvider : AppWidgetProvider() {
                 mgr.notifyAppWidgetViewDataChanged(id, R.id.list_mystuff)
             }
         }
+
+        /** Fully rebind every live widget (re-set adapters + tab state). More reliable than
+         *  notifyDataChanged alone when the underlying data was replaced. */
+        fun updateAll(context: Context) {
+            val mgr = AppWidgetManager.getInstance(context)
+            val ids = mgr.getAppWidgetIds(
+                ComponentName(context, TVTimeWidgetProvider::class.java)
+            )
+            ids.forEach { TVTimeWidgetProvider().updateWidget(context, mgr, it) }
+        }
     }
 
     override fun onUpdate(

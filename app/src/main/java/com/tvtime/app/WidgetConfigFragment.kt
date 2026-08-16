@@ -133,7 +133,7 @@ class WidgetConfigFragment : Fragment() {
                     WatchlistStore.init(requireContext())
                     finalWatchlist?.let { WatchlistStore.saveWatchlist(it) }
                     ms?.let { WatchlistStore.saveMyStuff(it) }
-                    TVTimeWidgetProvider.notifyDataChanged(requireContext())
+                    TVTimeWidgetProvider.updateAll(requireContext())
                     tvTubiSyncStatus?.text = buildString {
                         append("Synced: $wlCount in WatchList")
                         when {
@@ -210,7 +210,7 @@ class WidgetConfigFragment : Fragment() {
                         } else {
                             WatchlistStore.init(requireContext())
                             WatchlistStore.saveWatchlist(items)
-                            TVTimeWidgetProvider.notifyDataChanged(requireContext())
+                            TVTimeWidgetProvider.updateAll(requireContext())
                             tvCatalogStatus?.text = "Loaded ${items.size} titles into WatchList"
                         }
                     }
@@ -445,7 +445,7 @@ class WidgetConfigFragment : Fragment() {
                         if (!recs.isNullOrEmpty()) {
                             WatchlistStore.init(ctx)
                             WatchlistStore.saveWatchlist(recs)
-                            TVTimeWidgetProvider.notifyDataChanged(ctx)
+                            TVTimeWidgetProvider.updateAll(ctx)
                         }
                     } catch (_: Exception) {
                     }
