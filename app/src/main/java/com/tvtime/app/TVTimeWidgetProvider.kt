@@ -15,6 +15,18 @@ class TVTimeWidgetProvider : AppWidgetProvider() {
         const val ACTION_PREV_PAGE = "com.tvtime.app.ACTION_PREV_PAGE"
         private const val WIDGET_WIDTH_PX = 400
         private const val WIDGET_HEIGHT_PX = 200
+
+        /** Tell all live widgets to reload their show lists from WatchlistStore. */
+        fun notifyDataChanged(context: Context) {
+            val mgr = AppWidgetManager.getInstance(context)
+            val ids = mgr.getAppWidgetIds(
+                ComponentName(context, TVTimeWidgetProvider::class.java)
+            )
+            ids.forEach { id ->
+                mgr.notifyAppWidgetViewDataChanged(id, R.id.list_watchlist)
+                mgr.notifyAppWidgetViewDataChanged(id, R.id.list_mystuff)
+            }
+        }
     }
 
     override fun onUpdate(
@@ -121,6 +133,28 @@ class TVTimeWidgetProvider : AppWidgetProvider() {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
         views.setOnClickPendingIntent(R.id.btn_open_tubi, tubiPendingIntent)
+
+        val watchIntent = Intent(context, WatchDetailsActivity::class.java)
+        val watchPendingIntent = PendingIntent.getActivity(
+            context, appWidgetId, watchIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        views.setPendingIntentTemplate(R.id.list_watchlist, watchPendingIntent)
+        views.setPendingIntentTemplate(R.id.list_mystuff, watchPendingIntent)
+
+        val watchListIntent = Intent(context, WatchlistWidgetService::class.java).apply {
+            putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
+            putExtra("list_type", "watchlist")
+        }
+        views.setRemoteAdapter(appWidgetId, R.id.list_watchlist, watchListIntent)
+        views.setEmptyView(R.id.list_watchlist, R.id.tv_empty_p1)
+
+        val myStuffIntent = Intent(context, WatchlistWidgetService::class.java).apply {
+            putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
+            putExtra("list_type", "mystuff")
+        }
+        views.setRemoteAdapter(appWidgetId, R.id.list_mystuff, myStuffIntent)
+        views.setEmptyView(R.id.list_mystuff, R.id.tv_empty_p2)
 
         val configIntent = Intent(context, MainActivity::class.java).apply {
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)

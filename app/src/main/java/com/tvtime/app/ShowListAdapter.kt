@@ -10,7 +10,9 @@ import androidx.recyclerview.widget.RecyclerView
 data class ShowItem(
     val title: String,
     val subtitle: String,
-    val progress: Int
+    val progress: Int,
+    val imageUrl: String = "",
+    val watchUrl: String = ""
 )
 
 class ShowListAdapter(

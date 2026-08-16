@@ -50,7 +50,9 @@ object WatchlistStore {
                 ShowItem(
                     o.optString("title", ""),
                     o.optString("subtitle", ""),
-                    o.optInt("progress", 0).coerceIn(0, 100)
+                    o.optInt("progress", 0).coerceIn(0, 100),
+                    o.optString("imageUrl", ""),
+                    o.optString("watchUrl", "")
                 )
             )
         }
@@ -65,6 +67,8 @@ object WatchlistStore {
                     put("title", item.title)
                     put("subtitle", item.subtitle)
                     put("progress", item.progress)
+                    put("imageUrl", item.imageUrl)
+                    put("watchUrl", item.watchUrl)
                 }
             )
         }

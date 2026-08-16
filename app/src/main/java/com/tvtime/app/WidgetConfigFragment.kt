@@ -17,6 +17,7 @@ import android.widget.*
 import androidx.fragment.app.Fragment
 import org.json.JSONArray
 import org.json.JSONObject
+import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URL
 
@@ -89,6 +90,8 @@ class WidgetConfigFragment : Fragment() {
         val etPass = view.findViewById<EditText>(R.id.et_tubi_pass)
         val btnTubiLogin = view.findViewById<Button>(R.id.btn_tubi_login)
         val tvTubiStatus = view.findViewById<TextView>(R.id.tv_tubi_status)
+        val btnTubiSync = view.findViewById<Button>(R.id.btn_tubi_sync)
+        val tvTubiSyncStatus = view.findViewById<TextView>(R.id.tv_tubi_sync_status)
 
         fun refreshTubiUi() {
             if (TubiAccount.isLoggedIn()) {
@@ -104,6 +107,34 @@ class WidgetConfigFragment : Fragment() {
             }
         }
         refreshTubiUi()
+
+        fun syncTubi() {
+            if (!TubiAccount.isLoggedIn()) {
+                tvTubiSyncStatus?.text = "Sign in to Tubi first"
+                return
+            }
+            btnTubiSync?.isEnabled = false
+            tvTubiSyncStatus?.text = "Syncing your Tubi lists…"
+            TubiRepository.fetchUserLists { wl, ms ->
+                requireActivity().runOnUiThread {
+                    btnTubiSync?.isEnabled = true
+                    val wlCount = wl?.size ?: 0
+                    val msCount = ms?.size ?: 0
+                    if (wl == null && ms == null) {
+                        tvTubiSyncStatus?.text = "Sync failed (endpoint/parse). Keeping current list."
+                        return@runOnUiThread
+                    }
+                    WatchlistStore.init(requireContext())
+                    wl?.let { WatchlistStore.saveWatchlist(it) }
+                    ms?.let { WatchlistStore.saveMyStuff(it) }
+                    TVTimeWidgetProvider.notifyDataChanged(requireContext())
+                    tvTubiSyncStatus?.text =
+                        "Synced: $wlCount continue-watching, $msCount saved."
+                }
+            }
+        }
+
+        btnTubiSync?.setOnClickListener { syncTubi() }
 
         btnTubiLogin?.setOnClickListener {
             if (TubiAccount.isLoggedIn()) {
@@ -126,6 +157,7 @@ class WidgetConfigFragment : Fragment() {
                     btnTubiLogin.isEnabled = true
                     if (ok) {
                         refreshTubiUi()
+                        syncTubi()
                     } else {
                         tvTubiStatus?.text = "Sign-in failed: ${err ?: "unknown error"}"
                     }
@@ -139,7 +171,8 @@ class WidgetConfigFragment : Fragment() {
         val etCatalogKey = view.findViewById<EditText>(R.id.et_catalog_key)
         val btnLoadCatalog = view.findViewById<Button>(R.id.btn_load_catalog)
         val tvCatalogStatus = view.findViewById<TextView>(R.id.tv_catalog_status)
-        etCatalogUrl?.setText(catalogPrefs.getString("url", ""))
+        val defaultCatalogUrl = "https://api.parse.bot/scraper/3b4482fa-50a4-475d-a612-75d5c78654eb"
+        etCatalogUrl?.setText(catalogPrefs.getString("url", defaultCatalogUrl))
         etCatalogKey?.setText(catalogPrefs.getString("key", ""))
 
         btnLoadCatalog?.setOnClickListener {
@@ -151,29 +184,10 @@ class WidgetConfigFragment : Fragment() {
             }
             catalogPrefs.edit().putString("url", url).putString("key", key).apply()
             btnLoadCatalog.isEnabled = false
-            tvCatalogStatus?.text = "Loading…"
+            tvCatalogStatus?.text = "Loading categories…"
             Thread {
                 try {
-                    val conn = URL(url).openConnection() as HttpURLConnection
-                    conn.requestMethod = "GET"
-                    conn.setRequestProperty("Accept", "application/json")
-                    conn.setRequestProperty("User-Agent", "TVTimeApp")
-                    conn.setRequestProperty("X-API-Key", key)
-                    val code = conn.responseCode
-                    val resp = try {
-                        conn.inputStream.bufferedReader().readText()
-                    } catch (_: Exception) {
-                        conn.errorStream?.bufferedReader()?.readText() ?: ""
-                    }
-                    conn.disconnect()
-                    if (code !in 200..299) {
-                        requireActivity().runOnUiThread {
-                            btnLoadCatalog.isEnabled = true
-                            tvCatalogStatus?.text = "Fetch failed (HTTP $code)"
-                        }
-                        return@Thread
-                    }
-                    val items = parseCatalog(resp)
+                    val items = loadTubiCatalog(url, key)
                     requireActivity().runOnUiThread {
                         btnLoadCatalog.isEnabled = true
                         if (items.isNullOrEmpty()) {
@@ -181,6 +195,7 @@ class WidgetConfigFragment : Fragment() {
                         } else {
                             WatchlistStore.init(requireContext())
                             WatchlistStore.saveWatchlist(items)
+                            TVTimeWidgetProvider.notifyDataChanged(requireContext())
                             tvCatalogStatus?.text = "Loaded ${items.size} titles into WatchList"
                         }
                     }
@@ -433,12 +448,18 @@ class WidgetConfigFragment : Fragment() {
 
     private fun parseCatalog(resp: String): List<ShowItem>? {
         val json = try { JSONObject(resp) } catch (_: Exception) { null }
+        var node: Any? = json
+        if (json != null && json.has("result") && json.optJSONObject("result") != null) {
+            node = json.optJSONObject("result")
+        }
+        if (node is JSONObject && node.has("data")) node = node.opt("data")
         val arr: JSONArray? = when {
-            json != null && json.has("results") -> json.optJSONArray("results")
-            json != null && json.has("data") -> json.optJSONArray("data")
-            json != null && json.has("contents") -> json.optJSONArray("contents")
+            node is JSONArray -> node
+            node is JSONObject && node.has("items") -> node.optJSONArray("items")
+            node is JSONObject && node.has("results") -> node.optJSONArray("results")
+            node is JSONObject && node.has("contents") -> node.optJSONArray("contents")
+            node is JSONObject && node.has("entities") -> node.optJSONArray("entities")
             json != null && json.has("items") -> json.optJSONArray("items")
-            json != null && json.has("entities") -> json.optJSONArray("entities")
             else -> null
         }
         val source = arr ?: run {
@@ -451,9 +472,70 @@ class WidgetConfigFragment : Fragment() {
             val title = o.optString("title", o.optString("name", ""))
             if (title.isEmpty()) continue
             val subtitle = o.optString("description", o.optString("subtitle", ""))
-            out.add(ShowItem(title, subtitle, 0))
+            val imageUrl = o.optString("poster_url", o.optString("thumbnail_url", ""))
+            val watchUrl = o.optString("watch_url", o.optString("url", ""))
+            out.add(ShowItem(title, subtitle, 0, imageUrl, watchUrl))
         }
         return if (out.isNotEmpty()) out else null
+    }
+
+    private fun loadTubiCatalog(rawUrl: String, key: String): List<ShowItem>? {
+        var base = rawUrl.removeSuffix("/")
+        val li = base.indexOf("/list_content")
+        if (li >= 0) base = base.substring(0, li)
+        val all = mutableListOf<ShowItem>()
+        val seen = mutableSetOf<String>()
+        val slugs = parseCategories(fetchCatalog("$base/list_categories?limit=100", key))
+        if (slugs.isNotEmpty()) {
+            val usable = slugs.filter { s ->
+                !s.contains("recommended") && !s.contains("for_you") &&
+                        !s.contains("watch_it_again") && !s.contains("on_now")
+            }.take(8)
+            for (slug in usable) {
+                try {
+                    val page = parseCatalog(fetchCatalog("$base/list_content?category=$slug&limit=10", key)) ?: continue
+                    for (it in page) if (seen.add(it.title.lowercase())) all.add(it)
+                } catch (_: Exception) {}
+            }
+        }
+        if (all.isEmpty()) {
+            val page = parseCatalog(fetchCatalog("$base/list_content?limit=50", key))
+            if (page != null) for (it in page) if (seen.add(it.title.lowercase())) all.add(it)
+        }
+        return if (all.isNotEmpty()) all else null
+    }
+
+    private fun parseCategories(resp: String): List<String> {
+        val json = try { JSONObject(resp) } catch (_: Exception) { null }
+        val cats = json?.optJSONObject("data")?.optJSONArray("categories")
+        val out = mutableListOf<String>()
+        if (cats != null) {
+            for (i in 0 until cats.length()) {
+                val o = cats.optJSONObject(i) ?: continue
+                val slug = o.optString("slug", "")
+                if (slug.isNotEmpty()) out.add(slug)
+            }
+        }
+        return out
+    }
+
+    private fun fetchCatalog(url: String, key: String): String {
+        val conn = URL(url).openConnection() as HttpURLConnection
+        conn.requestMethod = "GET"
+        conn.setRequestProperty("Accept", "application/json")
+        conn.setRequestProperty("User-Agent", "TVTimeApp")
+        conn.setRequestProperty("X-API-Key", key)
+        conn.connectTimeout = 20000
+        conn.readTimeout = 20000
+        val code = conn.responseCode
+        val resp = try {
+            conn.inputStream.bufferedReader().readText()
+        } catch (_: Exception) {
+            conn.errorStream?.bufferedReader()?.readText() ?: ""
+        }
+        conn.disconnect()
+        if (code !in 200..299) throw IOException("HTTP $code")
+        return resp
     }
 }
 
