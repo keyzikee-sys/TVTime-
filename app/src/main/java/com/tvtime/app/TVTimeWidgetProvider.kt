@@ -133,6 +133,7 @@ class TVTimeWidgetProvider : AppWidgetProvider() {
         views.setPendingIntentTemplate(R.id.list_mystuff, watchPendingIntent)
 
         val watchListIntent = Intent(context, WatchlistWidgetService::class.java).apply {
+            action = "com.tvtime.app.LIST_WATCHLIST"
             putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
             putExtra("list_type", "watchlist")
         }
@@ -140,6 +141,7 @@ class TVTimeWidgetProvider : AppWidgetProvider() {
         views.setEmptyView(R.id.list_watchlist, R.id.tv_empty_p1)
 
         val myStuffIntent = Intent(context, WatchlistWidgetService::class.java).apply {
+            action = "com.tvtime.app.LIST_MYSTUFF"
             putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
             putExtra("list_type", "mystuff")
         }
