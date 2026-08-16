@@ -86,13 +86,11 @@ class WidgetConfigFragment : Fragment() {
         val tvTubiSyncStatus = view.findViewById<TextView>(R.id.tv_tubi_sync_status)
 
         val switchSource = view.findViewById<Switch>(R.id.switch_source)
-        val containerTubi = view.findViewById<View>(R.id.container_tubi_account)
-        val containerCatalog = view.findViewById<View>(R.id.container_catalog)
+        val containerSyncing = view.findViewById<View>(R.id.container_syncing)
         val switchDynamic = view.findViewById<Switch>(R.id.switch_dynamic_color)
 
-        fun applySource(useLogin: Boolean) {
-            containerTubi?.visibility = if (useLogin) View.VISIBLE else View.GONE
-            containerCatalog?.visibility = if (useLogin) View.GONE else View.VISIBLE
+        fun applySource(show: Boolean) {
+            containerSyncing?.visibility = if (show) View.VISIBLE else View.GONE
         }
         switchSource?.isChecked = true
         applySource(true)
