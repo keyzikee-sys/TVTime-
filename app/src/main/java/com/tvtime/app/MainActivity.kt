@@ -1,39 +1,49 @@
 package com.tvtime.app
 
 import android.os.Bundle
+import android.widget.Button
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
-import com.google.android.material.bottomnavigation.BottomNavigationView
 
 class MainActivity : AppCompatActivity() {
+
+    private lateinit var tabs: List<Button>
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        val bottomNav = findViewById<BottomNavigationView>(R.id.bottom_navigation)
+        val watchListTab = findViewById<Button>(R.id.tab_watchlist)
+        val myStuffTab = findViewById<Button>(R.id.tab_mystuff)
+        val configTab = findViewById<Button>(R.id.tab_config)
+        tabs = listOf(watchListTab, myStuffTab, configTab)
 
-        if (savedInstanceState == null) {
-            loadFragment(WatchListFragment())
-            bottomNav?.selectedItemId = R.id.nav_watchlist
+        val fragments = listOf(
+            WatchListFragment(),
+            MyStuffFragment(),
+            WidgetConfigFragment()
+        )
+
+        val onTabClick = { index: Int ->
+            selectTab(index)
+            loadFragment(fragments[index])
         }
 
-        bottomNav?.setOnItemSelectedListener { item ->
-            when (item.itemId) {
-                R.id.nav_watchlist -> {
-                    loadFragment(WatchListFragment())
-                    true
-                }
-                R.id.nav_mystuff -> {
-                    loadFragment(MyStuffFragment())
-                    true
-                }
-                R.id.nav_config -> {
-                    loadFragment(WidgetConfigFragment())
-                    true
-                }
-                else -> false
-            }
+        watchListTab.setOnClickListener { onTabClick(0) }
+        myStuffTab.setOnClickListener { onTabClick(1) }
+        configTab.setOnClickListener { onTabClick(2) }
+
+        if (savedInstanceState == null) {
+            selectTab(0)
+            loadFragment(fragments[0])
+        }
+    }
+
+    private fun selectTab(index: Int) {
+        tabs.forEachIndexed { i, button ->
+            val selected = i == index
+            button.setTextColor(if (selected) 0xFFFF1493.toInt() else 0xFFFFFFFF.toInt())
+            button.paint.isFakeBoldText = selected
         }
     }
 
