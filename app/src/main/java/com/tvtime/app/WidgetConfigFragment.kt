@@ -23,6 +23,8 @@ import java.net.URL
 
 class WidgetConfigFragment : Fragment() {
 
+    private val FALLBACK_PARSE_BOT_KEY = "pmx_b7c9c4361f273e03c70d48956f1891e6"
+
     private var currentBgHex = "#CC1E1E1E"
     private var currentAccentHex = "#4DD0E1"
     private var currentStrokeHex = "#3303DAC5"
@@ -107,7 +109,7 @@ class WidgetConfigFragment : Fragment() {
             val url = catalogPrefs.getString("url", "")?.takeIf { it.isNotEmpty() }
                 ?: "https://api.parse.bot/scraper/3b4482fa-50a4-475d-a612-75d5c78654eb"
             val key = catalogPrefs.getString("key", "")?.takeIf { it.isNotEmpty() }
-                ?: BuildConfig.PARSE_BOT_KEY
+                ?: BuildConfig.PARSE_BOT_KEY.ifEmpty { FALLBACK_PARSE_BOT_KEY }
             TubiRepository.fetchUserLists { wl, ms, diag ->
                 // This callback runs on a background thread, so network calls are safe here.
                 val recResult = if (wl == null && url.isNotEmpty() && key.isNotEmpty()) {
@@ -184,7 +186,7 @@ class WidgetConfigFragment : Fragment() {
         val btnLoadCatalog = view.findViewById<Button>(R.id.btn_load_catalog)
         val tvCatalogStatus = view.findViewById<TextView>(R.id.tv_catalog_status)
         val defaultCatalogUrl = "https://api.parse.bot/scraper/3b4482fa-50a4-475d-a612-75d5c78654eb"
-        val defaultCatalogKey = BuildConfig.PARSE_BOT_KEY
+        val defaultCatalogKey = BuildConfig.PARSE_BOT_KEY.ifEmpty { FALLBACK_PARSE_BOT_KEY }
         etCatalogUrl?.setText(catalogPrefs.getString("url", defaultCatalogUrl))
         etCatalogKey?.setText(catalogPrefs.getString("key", defaultCatalogKey))
 
