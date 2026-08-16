@@ -17,9 +17,16 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
-        android:text="Your saved bookmarks, library, and downloads will appear here."
+        android:layout_marginTop="6dp"
+        android:layout_marginBottom="12dp"
+        android:text="Your saved bookmarks, library, and downloads."
         android:textColor="#B0B0B0"
         android:textSize="14sp" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rv_mystuff"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scrollbars="vertical" />
 
 </LinearLayout>

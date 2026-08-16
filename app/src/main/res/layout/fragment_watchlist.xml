@@ -10,23 +10,32 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="WatchList"
-        android:textColor="#FFFFFF"
-        android:textSize="20sp"
+        android:textColor="#FFFF1493"
+        android:textSize="22sp"
         android:textStyle="bold" />
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:text="Your TVTime home widget launches Tubi in one tap. Add it from your launcher's widget picker, then customize its glass style in the Widget Config tab."
-        android:textColor="#B0B0B0"
-        android:textSize="14sp" />
 
     <Button
         android:id="@+id/btn_open_tubi"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:text="Open Tubi App"
+        android:contentDescription="Open streaming app" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
-        android:text="Open Tubi App" />
+        android:layout_marginBottom="8dp"
+        android:text="Continue Watching"
+        android:textColor="#FFFFFF"
+        android:textSize="15sp"
+        android:textStyle="bold" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rv_watchlist"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scrollbars="vertical" />
 
 </LinearLayout>
