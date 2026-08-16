@@ -110,20 +110,23 @@ object TubiRepository {
         return map
     }
 
-    /** Builds the correct Tubi deep link for a content object. Prefers the API's own path/url
-     * field (which handles movies, series and episodes correctly); falls back to /movies/<id>. */
+    /** Builds the correct Tubi web-page deep link for a content object.
+     * NOTE: the API's own "url" field is the *video manifest*, not a web page, so we never
+     * use it. Movies map to https://tubitv.com/movies/<id>/<slug>; series to /series/<id>/<slug>. */
     private fun resolveTubiUrl(o: JSONObject, id: Int): String {
-        for (field in listOf("url", "canonical_url", "share_url", "full_path", "path")) {
-            val raw = o.optString(field, "").trim()
-            if (raw.isNotEmpty()) {
-                val lower = raw.lowercase()
-                if (lower.startsWith("http")) return raw
-                if (lower.startsWith("/")) return "https://tubitv.com$raw"
-            }
+        val type = o.optString("detailed_type", "").lowercase()
+        val slug = slugify(o.optString("title", ""))
+        return if (type == "series" || type == "episode" || type == "show") {
+            "https://tubitv.com/series/$id/$slug"
+        } else {
+            "https://tubitv.com/movies/$id/$slug"
         }
-        val slug = o.optString("slug", "").trim()
-        if (slug.isNotEmpty()) return "https://tubitv.com/$slug-$id"
-        return "https://tubitv.com/movies/$id"
+    }
+
+    private fun slugify(title: String): String {
+        return title.lowercase()
+            .replace(Regex("[^a-z0-9]+"), "-")
+            .trim('-')
     }
 
     private fun tryGetPlain(url: String): String? {
