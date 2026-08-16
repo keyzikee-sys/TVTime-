@@ -29,6 +29,9 @@ object TubiAccount {
 
     private lateinit var prefs: SharedPreferences
 
+    /** In-memory diagnostic describing how the last login captured (or failed to capture) the JWT. */
+    var authDebug: String = ""
+
     fun init(context: Context) {
         prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
     }
@@ -82,14 +85,31 @@ object TubiAccount {
                         ?.substringAfter("=")?.trim() ?: ""
 
                     val json = try { JSONObject(resp) } catch (_: Exception) { null }
+                    // The user-queue API needs the JWT access token, which the legacy login
+                    // response often omits. Fetch it from /oz/auth/loadAuth using the new session.
+                    val fullCookie = "$cookies; connect.sid=$sid"
+                    val authJson = fetchLoadAuth(fullCookie)
+                    val at = pickToken(authJson) ?: pickToken(json) ?: ""
+                    val uid = authJson?.let { it.optJSONObject("user")?.optString("id", "") ?: it.optString("tubiId", "") }
+                        ?.ifEmpty { json?.optJSONObject("user")?.optString("id", "") ?: "" }
+                        ?: ""
+                    authDebug = buildString {
+                        append("loginRespToken=")
+                        append(if (json != null && (json.has("access_token") || json.has("accessToken") || json.has("token"))) "yes" else "no")
+                        append("; loadAuth=")
+                        if (authJson != null) {
+                            val keys = authJson.keys().asSequence().take(15).joinToString(",")
+                            append("keys[$keys] tokenLen=${at.length}; body=")
+                            append(authJson.toString().take(220))
+                        } else {
+                            append("null")
+                        }
+                    }
                     prefs.edit().apply {
                         putString(KEY_SESSION, sid)
                         putString(KEY_EMAIL, email)
-                        if (json != null) {
-                            if (json.has("accessToken")) putString(KEY_AT, json.getString("accessToken"))
-                            val user = if (json.has("user")) json.optJSONObject("user") else null
-                            if (user != null && user.has("id")) putString(KEY_UID, user.getString("id"))
-                        }
+                        if (at.isNotEmpty()) putString(KEY_AT, at)
+                        if (uid.isNotEmpty()) putString(KEY_UID, uid)
                         apply()
                     }
                     callback(true, null)
@@ -137,5 +157,39 @@ object TubiAccount {
             Regex(p, RegexOption.IGNORE_CASE).find(html)?.groupValues?.get(1)?.let { return it }
         }
         return ""
+    }
+
+    /** Reads the JWT access token from /oz/auth/loadAuth using the session cookie. */
+    private fun fetchLoadAuth(cookie: String): JSONObject? {
+        return try {
+            val conn = URL("https://tubitv.com/oz/auth/loadAuth").openConnection() as HttpURLConnection
+            conn.requestMethod = "GET"
+            conn.setRequestProperty("Accept", "application/json")
+            conn.setRequestProperty("User-Agent", UA)
+            conn.setRequestProperty("Origin", "https://tubitv.com")
+            conn.setRequestProperty("Referer", "https://tubitv.com/")
+            conn.setRequestProperty("Cookie", cookie)
+            val code = conn.responseCode
+            val body = try {
+                conn.inputStream.bufferedReader().readText()
+            } catch (_: Exception) {
+                conn.errorStream?.bufferedReader()?.readText() ?: ""
+            }
+            conn.disconnect()
+            if (code !in 200..299 || body.isEmpty()) null else JSONObject(body)
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    private fun pickToken(json: JSONObject?): String? {
+        if (json == null) return null
+        for (key in listOf("access_token", "accessToken", "token")) {
+            if (json.has(key)) {
+                val v = json.optString(key, "")
+                if (v.isNotEmpty()) return v
+            }
+        }
+        return null
     }
 }

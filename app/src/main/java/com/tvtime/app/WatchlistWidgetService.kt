@@ -92,7 +92,7 @@ private fun downloadBitmap(url: String): Bitmap? {
         conn.doInput = true
         conn.connect()
         val bmp = BitmapFactory.decodeStream(conn.inputStream) ?: return null
-        val scaled = Bitmap.createScaledBitmap(bmp, 72, 108, true)
+        val scaled = Bitmap.createScaledBitmap(bmp, 100, 150, true)
         if (scaled != bmp) bmp.recycle()
         scaled
     } catch (_: Exception) {

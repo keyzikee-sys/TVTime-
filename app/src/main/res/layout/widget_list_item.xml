@@ -1,54 +1,54 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/widget_list_item_root"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="horizontal"
-    android:padding="6dp"
-    android:gravity="center_vertical">
+    android:layout_margin="3dp">
 
     <ImageView
         android:id="@+id/iv_poster"
-        android:layout_width="36dp"
-        android:layout_height="54dp"
+        android:layout_width="match_parent"
+        android:layout_height="132dp"
         android:scaleType="centerCrop"
-        android:background="#222222"
-        android:layout_marginEnd="8dp" />
+        android:background="#15171C" />
 
     <LinearLayout
-        android:layout_width="0dp"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:orientation="vertical">
+        android:layout_gravity="bottom"
+        android:orientation="vertical"
+        android:padding="6dp"
+        android:background="@drawable/widget_poster_scrim">
 
         <TextView
             android:id="@+id/tv_title"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:textColor="#FFFFFF"
-            android:textSize="13sp"
+            android:textSize="11sp"
             android:textStyle="bold"
-            android:singleLine="true"
+            android:maxLines="2"
             android:ellipsize="end" />
 
         <TextView
             android:id="@+id/tv_sub"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textColor="#CCCCCC"
-            android:textSize="11sp"
-            android:singleLine="true"
+            android:textColor="#B8C0CC"
+            android:textSize="10sp"
+            android:maxLines="1"
             android:ellipsize="end"
-            android:layout_marginTop="2dp" />
+            android:layout_marginTop="1dp" />
 
         <ProgressBar
             android:id="@+id/pb_show_progress"
             style="?android:attr/progressBarStyleHorizontal"
             android:layout_width="match_parent"
-            android:layout_height="4dp"
+            android:layout_height="3dp"
             android:layout_marginTop="4dp"
             android:max="100"
             android:progress="0"
-            android:progressTint="#FFFF1493" />
+            android:progressTint="#4DD0E1"
+            android:backgroundTint="#333A44" />
     </LinearLayout>
-</LinearLayout>
+</FrameLayout>

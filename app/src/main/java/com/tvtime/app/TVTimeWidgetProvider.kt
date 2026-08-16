@@ -11,10 +11,10 @@ import android.widget.RemoteViews
 class TVTimeWidgetProvider : AppWidgetProvider() {
 
     companion object {
-        const val ACTION_NEXT_PAGE = "com.tvtime.app.ACTION_NEXT_PAGE"
-        const val ACTION_PREV_PAGE = "com.tvtime.app.ACTION_PREV_PAGE"
+        const val ACTION_PAGE = "com.tvtime.app.ACTION_PAGE"
         private const val WIDGET_WIDTH_PX = 400
         private const val WIDGET_HEIGHT_PX = 200
+        private val ACCENT = ColorUtils.parseArgb("#4DD0E1")!!
 
         /** Tell all live widgets to reload their show lists from WatchlistStore. */
         fun notifyDataChanged(context: Context) {
@@ -23,8 +23,8 @@ class TVTimeWidgetProvider : AppWidgetProvider() {
                 ComponentName(context, TVTimeWidgetProvider::class.java)
             )
             ids.forEach { id ->
-                mgr.notifyAppWidgetViewDataChanged(id, R.id.list_watchlist)
-                mgr.notifyAppWidgetViewDataChanged(id, R.id.list_mystuff)
+                mgr.notifyAppWidgetViewDataChanged(id, R.id.grid_watchlist)
+                mgr.notifyAppWidgetViewDataChanged(id, R.id.grid_mystuff)
             }
         }
     }
@@ -41,10 +41,9 @@ class TVTimeWidgetProvider : AppWidgetProvider() {
         super.onReceive(context, intent)
         val appWidgetManager = AppWidgetManager.getInstance(context)
         when (intent.action) {
-            ACTION_NEXT_PAGE ->
-                flipPage(context, appWidgetManager, intent, 1)
-            ACTION_PREV_PAGE ->
-                flipPage(context, appWidgetManager, intent, 0)
+            ACTION_PAGE ->
+                flipPage(context, appWidgetManager, intent,
+                    intent.getIntExtra("page", 0))
         }
     }
 
@@ -96,74 +95,56 @@ class TVTimeWidgetProvider : AppWidgetProvider() {
         )
         views.setImageViewBitmap(R.id.iv_widget_bg, glass)
 
-        val accent = ColorUtils.parseArgb(prefs.accentHexColor)
-            ?: ColorUtils.parseArgb("#FFFF1493")!!
-        views.setTextColor(R.id.tv_widget_title_p1, accent)
-        views.setTextColor(R.id.tv_widget_title_p2, accent)
+        val accent = ColorUtils.parseArgb(prefs.accentHexColor) ?: ACCENT
+        val inactive = ColorUtils.parseArgb("#8A93A3")!!
+        views.setTextColor(R.id.tv_tab_watchlist, if (prefs.currentPage == 0) accent else inactive)
+        views.setTextColor(R.id.tv_tab_mystuff, if (prefs.currentPage == 1) accent else inactive)
 
         views.setDisplayedChild(R.id.view_flipper, prefs.currentPage)
 
-        val service = StreamingServices.byPackage(prefs.selectedServicePackage)
-            ?: StreamingServices.default()
-        views.setTextViewText(R.id.btn_open_tubi, "Open ${service.name}")
-
-        val nextPendingIntent = PendingIntent.getBroadcast(
-            context, appWidgetId,
+        val tabWatchlistIntent = PendingIntent.getBroadcast(
+            context, appWidgetId + 1,
             Intent(context, TVTimeWidgetProvider::class.java).apply {
-                action = ACTION_NEXT_PAGE
+                action = ACTION_PAGE
                 putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
+                putExtra("page", 0)
             },
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
-        views.setOnClickPendingIntent(R.id.btn_next_page, nextPendingIntent)
+        views.setOnClickPendingIntent(R.id.tv_tab_watchlist, tabWatchlistIntent)
 
-        val prevPendingIntent = PendingIntent.getBroadcast(
-            context, appWidgetId,
+        val tabMyStuffIntent = PendingIntent.getBroadcast(
+            context, appWidgetId + 2,
             Intent(context, TVTimeWidgetProvider::class.java).apply {
-                action = ACTION_PREV_PAGE
+                action = ACTION_PAGE
                 putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
+                putExtra("page", 1)
             },
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
-        views.setOnClickPendingIntent(R.id.btn_prev_page, prevPendingIntent)
-
-        val launchIntent = StreamingServices.createLaunchIntent(context, service)
-        val tubiPendingIntent = PendingIntent.getActivity(
-            context, appWidgetId, launchIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-        views.setOnClickPendingIntent(R.id.btn_open_tubi, tubiPendingIntent)
+        views.setOnClickPendingIntent(R.id.tv_tab_mystuff, tabMyStuffIntent)
 
         val watchIntent = Intent(context, WatchDetailsActivity::class.java)
         val watchPendingIntent = PendingIntent.getActivity(
             context, appWidgetId, watchIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
-        views.setPendingIntentTemplate(R.id.list_watchlist, watchPendingIntent)
-        views.setPendingIntentTemplate(R.id.list_mystuff, watchPendingIntent)
+        views.setPendingIntentTemplate(R.id.grid_watchlist, watchPendingIntent)
+        views.setPendingIntentTemplate(R.id.grid_mystuff, watchPendingIntent)
 
         val watchListIntent = Intent(context, WatchlistWidgetService::class.java).apply {
             putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
             putExtra("list_type", "watchlist")
         }
-        views.setRemoteAdapter(appWidgetId, R.id.list_watchlist, watchListIntent)
-        views.setEmptyView(R.id.list_watchlist, R.id.tv_empty_p1)
+        views.setRemoteAdapter(appWidgetId, R.id.grid_watchlist, watchListIntent)
+        views.setEmptyView(R.id.grid_watchlist, R.id.tv_empty_p1)
 
         val myStuffIntent = Intent(context, WatchlistWidgetService::class.java).apply {
             putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
             putExtra("list_type", "mystuff")
         }
-        views.setRemoteAdapter(appWidgetId, R.id.list_mystuff, myStuffIntent)
-        views.setEmptyView(R.id.list_mystuff, R.id.tv_empty_p2)
-
-        val configIntent = Intent(context, MainActivity::class.java).apply {
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        }
-        val configPendingIntent = PendingIntent.getActivity(
-            context, appWidgetId, configIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-        views.setOnClickPendingIntent(R.id.btn_open_config, configPendingIntent)
+        views.setRemoteAdapter(appWidgetId, R.id.grid_mystuff, myStuffIntent)
+        views.setEmptyView(R.id.grid_mystuff, R.id.tv_empty_p2)
 
         appWidgetManager.updateAppWidget(appWidgetId, views)
     }

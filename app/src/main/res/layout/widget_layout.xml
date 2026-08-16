@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@android:color/transparent"
-    android:padding="12dp">
+    android:padding="8dp">
 
     <ImageView
         android:id="@+id/iv_widget_bg"
@@ -13,117 +13,98 @@
         android:scaleType="fitXY"
         android:src="@null" />
 
-    <ViewFlipper
-        android:id="@+id/view_flipper"
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:orientation="vertical">
 
-        <!-- Page 1: WatchList -->
         <LinearLayout
-            android:id="@+id/widget_page_1"
+            android:id="@+id/widget_header"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:orientation="vertical">
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingBottom="4dp">
 
             <TextView
-                android:id="@+id/tv_widget_title_p1"
-                android:layout_width="wrap_content"
+                android:id="@+id/tv_tab_watchlist"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="center"
                 android:text="WatchList"
-                android:textColor="#FFFF1493"
-                android:textSize="16sp"
-                android:textStyle="bold" />
-
-            <ListView
-                android:id="@+id/list_watchlist"
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="1"
-                android:layout_marginTop="6dp"
-                android:divider="@android:color/transparent"
-                android:dividerHeight="4dp"
-                android:scrollbars="none" />
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:clickable="true" />
 
             <TextView
-                android:id="@+id/tv_empty_p1"
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
+                android:id="@+id/tv_tab_mystuff"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:gravity="center"
-                android:text="No shows yet — add in the app"
-                android:textColor="#CCCCCC"
-                android:textSize="13sp" />
-
-            <Button
-                android:id="@+id/btn_open_tubi"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:text="Open Tubi App"
-                android:contentDescription="Open streaming app" />
-
-            <Button
-                android:id="@+id/btn_next_page"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:text="Next: My Stuff ➡️"
-                android:contentDescription="Go to My Stuff page" />
-        </LinearLayout>
-
-        <!-- Page 2: My Stuff -->
-        <LinearLayout
-            android:id="@+id/widget_page_2"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:orientation="vertical">
-
-            <TextView
-                android:id="@+id/tv_widget_title_p2"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
                 android:text="My Stuff"
-                android:textColor="#FFFF1493"
-                android:textSize="16sp"
-                android:textStyle="bold" />
-
-            <ListView
-                android:id="@+id/list_mystuff"
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="1"
-                android:layout_marginTop="6dp"
-                android:divider="@android:color/transparent"
-                android:dividerHeight="4dp"
-                android:scrollbars="none" />
-
-            <TextView
-                android:id="@+id/tv_empty_p2"
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="1"
-                android:gravity="center"
-                android:text="Nothing saved yet — add in the app"
-                android:textColor="#CCCCCC"
-                android:textSize="13sp" />
-
-            <Button
-                android:id="@+id/btn_open_config"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:text="Widget Customization"
-                android:contentDescription="Open widget customization" />
-
-            <Button
-                android:id="@+id/btn_prev_page"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:text="⬅️ Back to WatchList"
-                android:contentDescription="Go to WatchList page" />
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:clickable="true" />
         </LinearLayout>
 
-    </ViewFlipper>
+        <ViewFlipper
+            android:id="@+id/view_flipper"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1">
 
+            <FrameLayout
+                android:id="@+id/widget_page_1"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+                <GridView
+                    android:id="@+id/grid_watchlist"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:numColumns="2"
+                    android:verticalSpacing="6dp"
+                    android:horizontalSpacing="6dp"
+                    android:stretchMode="spacingWidth"
+                    android:scrollbars="none"
+                    android:gravity="center" />
+
+                <TextView
+                    android:id="@+id/tv_empty_p1"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
+                    android:text="No shows yet — add in the app"
+                    android:textColor="#B8C0CC"
+                    android:textSize="12sp" />
+            </FrameLayout>
+
+            <FrameLayout
+                android:id="@+id/widget_page_2"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+                <GridView
+                    android:id="@+id/grid_mystuff"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:numColumns="2"
+                    android:verticalSpacing="6dp"
+                    android:horizontalSpacing="6dp"
+                    android:stretchMode="spacingWidth"
+                    android:scrollbars="none"
+                    android:gravity="center" />
+
+                <TextView
+                    android:id="@+id/tv_empty_p2"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
+                    android:text="Nothing saved yet — add in the app"
+                    android:textColor="#B8C0CC"
+                    android:textSize="12sp" />
+            </FrameLayout>
+        </ViewFlipper>
+    </LinearLayout>
 </FrameLayout>

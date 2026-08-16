@@ -24,7 +24,7 @@ import java.net.URL
 class WidgetConfigFragment : Fragment() {
 
     private var currentBgHex = "#CC1E1E1E"
-    private var currentAccentHex = "#FFFF1493"
+    private var currentAccentHex = "#4DD0E1"
     private var currentStrokeHex = "#3303DAC5"
 
     override fun onCreateView(
@@ -50,20 +50,8 @@ class WidgetConfigFragment : Fragment() {
         val previewCard = view.findViewById<View>(R.id.preview_card)
         val tvPreviewTitle = view.findViewById<TextView>(R.id.tv_preview_title)
 
-        val spinnerService = view.findViewById<Spinner>(R.id.spinner_service)
-        val serviceNames = StreamingServices.ALL.map { it.name }
-        spinnerService?.adapter = ArrayAdapter(
-            requireContext(),
-            android.R.layout.simple_spinner_item,
-            serviceNames
-        ).apply {
-            setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-        }
-        val currentServiceIndex = StreamingServices.ALL.indexOfFirst {
-            it.packageName == prefs.selectedServicePackage
-        }.coerceAtLeast(0)
-        spinnerService?.setSelection(currentServiceIndex)
-
+        // The widget is Tubi-only (recommendations + your bookmarks, taps open Tubi), so the
+        // streaming-service spinner was removed — the service is always forced to Tubi.
         val rgPresets = view.findViewById<RadioGroup>(R.id.rg_glass_presets)
         val seekBgBlur = view.findViewById<SeekBar>(R.id.seek_bg_blur)
         val seekGaussian = view.findViewById<SeekBar>(R.id.seek_gaussian_blur)
@@ -115,21 +103,32 @@ class WidgetConfigFragment : Fragment() {
             }
             btnTubiSync?.isEnabled = false
             tvTubiSyncStatus?.text = "Syncing your Tubi lists…"
-            TubiRepository.fetchUserLists { wl, ms ->
+            val catalogPrefs = requireContext().getSharedPreferences("TVTimeCatalog", Context.MODE_PRIVATE)
+            val url = catalogPrefs.getString("url", "") ?: ""
+            val key = catalogPrefs.getString("key", "") ?: ""
+            TubiRepository.fetchUserLists { wl, ms, diag ->
+                // This callback runs on a background thread, so network calls are safe here.
+                val recommendations = if (wl == null && url.isNotEmpty() && key.isNotEmpty()) {
+                    try { loadRecommendationsCatalog(url, key) } catch (_: Exception) { null }
+                } else null
                 requireActivity().runOnUiThread {
                     btnTubiSync?.isEnabled = true
-                    val wlCount = wl?.size ?: 0
-                    val msCount = ms?.size ?: 0
-                    if (wl == null && ms == null) {
-                        tvTubiSyncStatus?.text = "Sync failed (endpoint/parse). Keeping current list."
+                    if (wl == null && ms == null && recommendations == null) {
+                        tvTubiSyncStatus?.text = "Sync failed: $diag"
                         return@runOnUiThread
                     }
+                    val finalWatchlist = wl ?: recommendations
+                    val wlCount = finalWatchlist?.size ?: 0
+                    val msCount = ms?.size ?: 0
                     WatchlistStore.init(requireContext())
-                    wl?.let { WatchlistStore.saveWatchlist(it) }
+                    finalWatchlist?.let { WatchlistStore.saveWatchlist(it) }
                     ms?.let { WatchlistStore.saveMyStuff(it) }
                     TVTimeWidgetProvider.notifyDataChanged(requireContext())
-                    tvTubiSyncStatus?.text =
-                        "Synced: $wlCount continue-watching, $msCount saved."
+                    tvTubiSyncStatus?.text = buildString {
+                        append("Synced: $wlCount in WatchList")
+                        if (wl == null && recommendations != null) append(" (recommended)")
+                        append(", $msCount saved.")
+                    }
                 }
             }
         }
@@ -172,8 +171,9 @@ class WidgetConfigFragment : Fragment() {
         val btnLoadCatalog = view.findViewById<Button>(R.id.btn_load_catalog)
         val tvCatalogStatus = view.findViewById<TextView>(R.id.tv_catalog_status)
         val defaultCatalogUrl = "https://api.parse.bot/scraper/3b4482fa-50a4-475d-a612-75d5c78654eb"
+        val defaultCatalogKey = BuildConfig.PARSE_BOT_KEY
         etCatalogUrl?.setText(catalogPrefs.getString("url", defaultCatalogUrl))
-        etCatalogKey?.setText(catalogPrefs.getString("key", ""))
+        etCatalogKey?.setText(catalogPrefs.getString("key", defaultCatalogKey))
 
         btnLoadCatalog?.setOnClickListener {
             val url = etCatalogUrl?.text?.toString()?.trim() ?: ""
@@ -211,6 +211,8 @@ class WidgetConfigFragment : Fragment() {
         currentBgHex = prefs.bgHexColor
         currentAccentHex = prefs.accentHexColor
         currentStrokeHex = prefs.borderHexColor
+        // Ensure the service is always Tubi (spinner removed).
+        prefs.selectedServicePackage = "com.tubitv"
 
         etBgHex?.setText(currentBgHex)
         updateColorView(viewAccentPreview, currentAccentHex)
@@ -377,9 +379,7 @@ class WidgetConfigFragment : Fragment() {
                 R.id.rb_preset_liquid_noblur -> GlassBitmapRenderer.PRESET_LIQUID_NOBLUR
                 else -> GlassBitmapRenderer.PRESET_LIGHT
             }
-            val servicePackage = StreamingServices.ALL.getOrNull(
-                spinnerService?.selectedItemPosition ?: 0
-            )?.packageName ?: StreamingServices.default().packageName
+            val servicePackage = "com.tubitv"
 
             val style = WidgetStyle(
                 glassPreset = selectedPreset,
@@ -418,6 +418,23 @@ class WidgetConfigFragment : Fragment() {
                 configureActivity.finishConfigure()
             } else {
                 Toast.makeText(ctx, "Widget Customization Saved & Updated!", Toast.LENGTH_SHORT).show()
+            }
+
+            // Auto-populate WatchList with Tubi recommendations so the widget isn't empty.
+            val acUrl = etCatalogUrl?.text?.toString()?.trim() ?: ""
+            val acKey = etCatalogKey?.text?.toString()?.trim() ?: ""
+            if (acUrl.isNotEmpty() && acKey.isNotEmpty()) {
+                Thread {
+                    try {
+                        val recs = loadRecommendationsCatalog(acUrl, acKey)
+                        if (!recs.isNullOrEmpty()) {
+                            WatchlistStore.init(ctx)
+                            WatchlistStore.saveWatchlist(recs)
+                            TVTimeWidgetProvider.notifyDataChanged(ctx)
+                        }
+                    } catch (_: Exception) {
+                    }
+                }.start()
             }
         }
 
@@ -480,6 +497,10 @@ class WidgetConfigFragment : Fragment() {
     }
 
     private fun loadTubiCatalog(rawUrl: String, key: String): List<ShowItem>? {
+        // WatchList is Tubi's "Recommended for you" section by default.
+        val rec = loadRecommendationsCatalog(rawUrl, key)
+        if (rec != null && rec.isNotEmpty()) return rec
+        // Fallback: merge a handful of general categories (excluding recommendation-style rows).
         var base = rawUrl.removeSuffix("/")
         val li = base.indexOf("/list_content")
         if (li >= 0) base = base.substring(0, li)
@@ -503,6 +524,13 @@ class WidgetConfigFragment : Fragment() {
             if (page != null) for (it in page) if (seen.add(it.title.lowercase())) all.add(it)
         }
         return if (all.isNotEmpty()) all else null
+    }
+
+    private fun loadRecommendationsCatalog(rawUrl: String, key: String): List<ShowItem>? {
+        var base = rawUrl.removeSuffix("/")
+        val li = base.indexOf("/list_content")
+        if (li >= 0) base = base.substring(0, li)
+        return parseCatalog(fetchCatalog("$base/list_content?category=recommended_for_you&limit=20", key))
     }
 
     private fun parseCategories(resp: String): List<String> {

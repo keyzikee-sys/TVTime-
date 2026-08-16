@@ -30,6 +30,9 @@ android {
         versionCode 1
         versionName "1.0"
 
+        def parseBotKey = keystoreProps.getProperty("PARSE_BOT_KEY", "")
+        buildConfigField "String", "PARSE_BOT_KEY", "\"${parseBotKey}\""
+
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 

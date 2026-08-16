@@ -66,7 +66,7 @@ class WidgetPreferences(context: Context, private val widgetId: Int = DEFAULT_ID
         set(value) = putString(KEY_BG_HEX, value)
 
     var accentHexColor: String
-        get() = getString(KEY_ACCENT_HEX, "#FFFF1493")
+        get() = getString(KEY_ACCENT_HEX, "#4DD0E1")
         set(value) = putString(KEY_ACCENT_HEX, value)
 
     var borderHexColor: String

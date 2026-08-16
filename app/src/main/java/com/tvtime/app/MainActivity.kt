@@ -44,7 +44,7 @@ class MainActivity : AppCompatActivity() {
     private fun selectTab(index: Int) {
         tabs.forEachIndexed { i, button ->
             val selected = i == index
-            button.setTextColor(if (selected) 0xFFFF1493.toInt() else 0xFFFFFFFF.toInt())
+            button.setTextColor(if (selected) 0xFF4DD0E1.toInt() else 0xFFFFFFFF.toInt())
             button.paint.isFakeBoldText = selected
         }
     }

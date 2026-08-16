@@ -30,9 +30,8 @@ class WatchListFragment : Fragment() {
         WatchlistStore.init(requireContext())
         list = WatchlistStore.getWatchlist()
 
-        val service = StreamingServices.byPackage(
-            WidgetPreferences(requireContext()).selectedServicePackage
-        ) ?: StreamingServices.default()
+        val service = StreamingServices.byPackage("com.tubitv")
+            ?: StreamingServices.default()
 
         val button = view.findViewById<Button>(R.id.btn_open_tubi)
         button?.text = "Open ${service.name}"
