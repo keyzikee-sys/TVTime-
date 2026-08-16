@@ -73,7 +73,7 @@ class WatchlistRemoteViewsFactory(
         if (bmp != null) {
             views.setImageViewBitmap(R.id.iv_poster, bmp)
         } else {
-            views.setInt(R.id.iv_poster, "setBackgroundColor", Color.parseColor("#222222"))
+            views.setInt(R.id.iv_poster, "setBackgroundResource", R.drawable.poster_placeholder)
         }
         views.setOnClickFillInIntent(
             R.id.widget_list_item_root,
