@@ -21,20 +21,10 @@ object WatchlistStore {
     }
 
     fun getWatchlist(): MutableList<ShowItem> {
-        if (!prefs.contains(KEY_WATCH)) {
-            val seed = seedWatch().toMutableList()
-            saveWatchlist(seed)
-            return seed
-        }
         return load(KEY_WATCH)
     }
 
     fun getMyStuff(): MutableList<ShowItem> {
-        if (!prefs.contains(KEY_MY)) {
-            val seed = seedMy().toMutableList()
-            saveMyStuff(seed)
-            return seed
-        }
         return load(KEY_MY)
     }
 
