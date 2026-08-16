@@ -43,14 +43,14 @@ class WatchListFragment : Fragment() {
     }
 
     private fun sampleShows(): List<ShowItem> = listOf(
-        ShowItem("Stranger Things", "S4 · E7 — The Massacre at Hawkins Lab", 72),
-        ShowItem("The Bear", "S2 · E3 — Sundae", 45),
-        ShowItem("Severance", "S1 · E9 — The We We Are", 90),
-        ShowItem("Wednesday", "S1 · E6 — You Reaper", 30),
-        ShowItem("Dark", "S3 · E8 — The Paradise", 60),
-        ShowItem("Arcane", "S1 · E9 — The Monster You Created", 100),
-        ShowItem("The Last of Us", "S1 · E5 — Endure and Survive", 18),
-        ShowItem("Loki", "S2 · E2 — Breaking Brad", 55)
+        ShowItem("Naruto", "S4 · E40 — The Ultimate Secret", 65),
+        ShowItem("Stargate SG-1", "S7 · E12 — Evolution", 80),
+        ShowItem("Columbo", "S2 · E5 — The Greenhouse Jungle", 40),
+        ShowItem("Dragon Ball Z", "S3 · E90 — Trunks Revealed", 55),
+        ShowItem("Farscape", "S1 · E8 — That Old Black Magic", 30),
+        ShowItem("Xena: Warrior Princess", "S4 · E10 — Crusader", 72),
+        ShowItem("Paranormal Activity", "Film · 1h 39m", 90),
+        ShowItem("One Piece", "S10 · E200 — The Light of Shandora", 25)
     )
 
     private fun openService(context: android.content.Context, service: StreamingServices.Service) {

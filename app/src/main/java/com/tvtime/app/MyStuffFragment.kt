@@ -18,11 +18,12 @@ class MyStuffFragment : Fragment() {
         val recycler = view.findViewById<RecyclerView>(R.id.rv_mystuff)
         recycler?.layoutManager = LinearLayoutManager(requireContext())
         val fallback = listOf(
-            ShowItem("The Boys", "Saved · S3 · E8", 0),
-            ShowItem("Peaky Blinders", "In Library · S6 · E6", 0),
-            ShowItem("Foundation", "Downloaded · S2 · E1", 0),
-            ShowItem("Invincible", "Saved · S1 · E8", 0),
-            ShowItem("Shadow and Bone", "In Library · S2 · E4", 0)
+            ShowItem("Godzilla (1954)", "In Library · Film", 0),
+            ShowItem("The 3 Stooges", "Saved · Collection", 0),
+            ShowItem("Insidious", "Saved · Film", 0),
+            ShowItem("Hercules: The Legendary Journeys", "In Library · S3", 0),
+            ShowItem("Death Wish", "Saved · Film", 0),
+            ShowItem("Sailor Moon", "Saved · S1", 0)
         )
         recycler?.adapter = ShowListAdapter(fallback)
 
