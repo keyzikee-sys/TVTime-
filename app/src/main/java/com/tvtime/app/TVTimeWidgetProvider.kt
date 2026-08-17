@@ -88,22 +88,12 @@ class TVTimeWidgetProvider : AppWidgetProvider() {
 
         views.setTextColor(R.id.tv_widget_header, accent)
 
-        WatchlistStore.init(context)
-        val all = WatchlistStore.getMyStuff()
-        val hero = all.firstOrNull()
-        views.setTextViewText(R.id.tv_count, if (all.isEmpty()) "" else "(${all.size})")
-
-        if (hero != null) {
-            views.setViewVisibility(R.id.hero_card, View.VISIBLE)
-            views.setTextViewText(R.id.tv_hero_title, hero.title)
-            views.setTextViewText(R.id.tv_hero_sub, hero.subtitle)
-            views.setProgressBar(R.id.pb_hero_progress, 100, hero.progress, false)
-            views.setOnClickPendingIntent(
-                R.id.hero_card,
-                buildRowIntent(context, appWidgetId, hero.watchUrl)
-            )
-        } else {
-            views.setViewVisibility(R.id.hero_card, View.GONE)
+        try {
+            WatchlistStore.init(context)
+            val n = WatchlistStore.getMyStuff().size
+            views.setTextViewText(R.id.tv_count, if (n == 0) "" else "($n)")
+        } catch (_: Exception) {
+            views.setTextViewText(R.id.tv_count, "")
         }
 
         val watchIntent = Intent(context, WatchDetailsActivity::class.java)
@@ -117,22 +107,11 @@ class TVTimeWidgetProvider : AppWidgetProvider() {
             action = "com.tvtime.app.LIST_MYSTUFF"
             putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
             putExtra("list_type", "mystuff")
-            putExtra("skip_first", true)
         }
         views.setRemoteAdapter(appWidgetId, R.id.list_mystuff, myStuffIntent)
         views.setEmptyView(R.id.list_mystuff, R.id.tv_empty_p2)
 
         appWidgetManager.updateAppWidget(appWidgetId, views)
-    }
-
-    private fun buildRowIntent(context: Context, requestCode: Int, watchUrl: String): PendingIntent {
-        val intent = Intent(context, WatchDetailsActivity::class.java).apply {
-            putExtra("watch_url", watchUrl)
-        }
-        return PendingIntent.getActivity(
-            context, requestCode, intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
     }
 
     /** Material You: on Android 12+ with dynamic color enabled, derive the accent from the
