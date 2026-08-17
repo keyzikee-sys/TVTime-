@@ -85,6 +85,11 @@ class WidgetPreferences(context: Context, private val widgetId: Int = DEFAULT_ID
         get() = getString(KEY_SERVICE, "com.tubitv")
         set(value) = putString(KEY_SERVICE, value)
 
+    /** Header label shown on the widget ("My Stuff" by default). */
+    var widgetTitle: String
+        get() = getString(KEY_TITLE, "My Stuff")
+        set(value) = putString(KEY_TITLE, value)
+
     /** When true (and the device is Android 12+), the widget tints its accent + border
      * from the system wallpaper (Material You dynamic color) instead of the saved accent. */
     var useDynamicColor: Boolean
@@ -136,6 +141,7 @@ class WidgetPreferences(context: Context, private val widgetId: Int = DEFAULT_ID
         private const val KEY_CURRENT_PAGE = "current_page"
         private const val KEY_SERVICE = "selected_service_package"
         private const val KEY_DYNAMIC = "use_dynamic_color"
+        private const val KEY_TITLE = "widget_title"
     }
 }
 

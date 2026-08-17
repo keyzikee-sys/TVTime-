@@ -94,9 +94,10 @@ class TVTimeWidgetProvider : AppWidgetProvider() {
             try {
                 WatchlistStore.init(context)
                 val shows = WatchlistStore.getMyStuff()
+                val title = prefs.widgetTitle.trim().ifEmpty { "My Stuff" }
                 views.setTextViewText(
                     R.id.tv_widget_header,
-                    if (shows.isEmpty()) "My Stuff" else "My Stuff (${shows.size})"
+                    if (shows.isEmpty()) title else "$title (${shows.size})"
                 )
                 if (shows.isEmpty()) {
                     views.setViewVisibility(R.id.hero_card, View.GONE)

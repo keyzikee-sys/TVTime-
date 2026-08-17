@@ -55,6 +55,7 @@ class WidgetConfigFragment : Fragment() {
         val seekCornerRadius = view.findViewById<SeekBar>(R.id.seek_corner_radius)
 
         val etBgHex = view.findViewById<EditText>(R.id.et_bg_hex)
+        val etWidgetTitle = view.findViewById<EditText>(R.id.et_widget_title)
         val btnPickAccent = view.findViewById<Button>(R.id.btn_pick_accent)
         val viewAccentPreview = view.findViewById<View>(R.id.view_accent_preview)
         val btnPickStroke = view.findViewById<Button>(R.id.btn_pick_stroke)
@@ -76,6 +77,7 @@ class WidgetConfigFragment : Fragment() {
         prefs.selectedServicePackage = "com.tubitv"
 
         etBgHex?.setText(currentBgHex)
+        etWidgetTitle?.setText(prefs.widgetTitle)
         updateColorView(viewAccentPreview, currentAccentHex)
         updateColorView(viewStrokePreview, currentStrokeHex)
 
@@ -227,6 +229,15 @@ class WidgetConfigFragment : Fragment() {
             override fun afterTextChanged(s: Editable?) {}
         })
 
+        etWidgetTitle?.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                val t = s.toString().trim()
+                tvPreviewTitle?.text = if (t.isEmpty()) "TVTime Live Widget" else t
+            }
+            override fun afterTextChanged(s: Editable?) {}
+        })
+
         btnPickAccent?.setOnClickListener {
             showColorPickerDialog(requireContext(), "Select Accent Color", currentAccentHex) { argbHex ->
                 currentAccentHex = argbHex
@@ -268,13 +279,25 @@ class WidgetConfigFragment : Fragment() {
             )
 
             val ctx = requireContext()
+            val title = etWidgetTitle?.text?.toString()?.trim()?.ifEmpty { "My Stuff" } ?: "My Stuff"
             if (isConfigure) {
-                WidgetPreferences(ctx, configureId).applyStyle(style)
+                WidgetPreferences(ctx, configureId).apply {
+                    applyStyle(style)
+                    widgetTitle = title
+                }
             } else {
-                WidgetPreferences(ctx).applyStyle(style)
+                WidgetPreferences(ctx).apply {
+                    applyStyle(style)
+                    widgetTitle = title
+                }
                 AppWidgetManager.getInstance(ctx)
                     .getAppWidgetIds(ComponentName(ctx, TVTimeWidgetProvider::class.java))
-                    .forEach { WidgetPreferences(ctx, it).applyStyle(style) }
+                    .forEach {
+                        WidgetPreferences(ctx, it).apply {
+                            applyStyle(style)
+                            widgetTitle = title
+                        }
+                    }
             }
 
             val intent = Intent(ctx, TVTimeWidgetProvider::class.java).apply {
