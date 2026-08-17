@@ -4,7 +4,10 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="horizontal"
-    android:padding="8dp"
+    android:background="#142A2A3A"
+    android:padding="9dp"
+    android:layout_marginTop="2dp"
+    android:layout_marginBottom="2dp"
     android:gravity="center_vertical">
 
     <LinearLayout
@@ -18,9 +21,9 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:textColor="#FFFFFF"
-            android:textSize="13sp"
+            android:textSize="14sp"
             android:textStyle="bold"
-            android:maxLines="2"
+            android:maxLines="1"
             android:ellipsize="end" />
 
         <TextView
@@ -38,7 +41,7 @@
             style="?android:attr/progressBarStyleHorizontal"
             android:layout_width="match_parent"
             android:layout_height="3dp"
-            android:layout_marginTop="5dp"
+            android:layout_marginTop="6dp"
             android:max="100"
             android:progress="0"
             android:progressTint="#4DD0E1"

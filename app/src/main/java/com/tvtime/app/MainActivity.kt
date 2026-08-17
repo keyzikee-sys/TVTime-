@@ -15,7 +15,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
         TubiAccount.init(this)
         WatchlistStore.init(this)
-        Toast.makeText(this, "BUILD 1712 count-check", Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, "BUILD 1718 row-polish", Toast.LENGTH_SHORT).show()
 
         val myStuffTab = findViewById<Button>(R.id.tab_mystuff)
         val syncingTab = findViewById<Button>(R.id.tab_syncing)
