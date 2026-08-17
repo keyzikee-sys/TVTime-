@@ -4,6 +4,8 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.LinearGradient
 import android.graphics.Paint
+import android.graphics.Path
+import android.graphics.Rect
 import android.graphics.RectF
 import android.graphics.Shader
 
@@ -43,7 +45,8 @@ object GlassBitmapRenderer {
         alphaPercent: Int,
         gaussianBlurRadius: Int = 0,
         density: Float,
-        gradient: Boolean = false
+        gradient: Boolean = false,
+        backdrop: Bitmap? = null
     ): Bitmap {
         val bitmap = Bitmap.createBitmap(
             widthPx.coerceAtLeast(1),
@@ -65,36 +68,64 @@ object GlassBitmapRenderer {
             heightPx - (stroke / 2f)
         )
 
-        val useBlur = gaussianBlurRadius > 0
-
-        // When blurring, use a soft vertical gradient so the blur is actually visible
-        // (a flat fill would blur into itself). Otherwise a solid / gradient fill.
-        val fillPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            style = Paint.Style.FILL
-            if (useBlur) {
-                shader = LinearGradient(
-                    0f, 0f, 0f, heightPx.toFloat(),
-                    blendWithWhite(finalBg, 0.25f), finalBg, Shader.TileMode.CLAMP
+        if (backdrop != null) {
+            // Real frosted glass: sample the wallpaper tiny (heavy downscale = natural blur),
+            // center-cover it into the widget, then tint it with the chosen shade. Content
+            // stays clipped to the rounded card so the glass has crisp corners.
+            val path = Path().apply { addRoundRect(rect, rx, rx, Path.Direction.CW) }
+            canvas.save()
+            canvas.clipPath(path)
+            val sample = sampleForGlass(backdrop, 110)
+            if (sample != null) {
+                drawCenterCover(canvas, sample, rect)
+                canvas.drawRect(
+                    rect,
+                    Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                        style = Paint.Style.FILL
+                        color = finalBg
+                    }
                 )
-            } else {
-                color = if (gradient) blendWithWhite(finalBg, 0.14f) else finalBg
+                // Subtle top sheen to sell the glass surface.
+                if (gradient) {
+                    canvas.drawRect(
+                        RectF(rect.left, rect.top, rect.right, rect.top + rect.height() * 0.45f),
+                        Paint(Paint.ANTI_ALIAS_FLAG).apply { color = 0x22FFFFFF }
+                    )
+                }
             }
-        }
-        canvas.drawRoundRect(rect, rx, rx, fillPaint)
+            canvas.restore()
+        } else {
+            val useBlur = gaussianBlurRadius > 0
 
-        if (gradient) {
-            val highlight = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            // When blurring, use a soft vertical gradient so the blur is actually visible
+            // (a flat fill would blur into itself). Otherwise a solid / gradient fill.
+            val fillPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
                 style = Paint.Style.FILL
-                color = 0x33FFFFFF
+                if (useBlur) {
+                    shader = LinearGradient(
+                        0f, 0f, 0f, heightPx.toFloat(),
+                        blendWithWhite(finalBg, 0.25f), finalBg, Shader.TileMode.CLAMP
+                    )
+                } else {
+                    color = if (gradient) blendWithWhite(finalBg, 0.14f) else finalBg
+                }
             }
-            canvas.drawRoundRect(
-                RectF(rect.left, rect.top, rect.right, rect.top + rect.height() * 0.45f),
-                rx, rx, highlight
-            )
-        }
+            canvas.drawRoundRect(rect, rx, rx, fillPaint)
 
-        if (useBlur) {
-            applyBoxBlur(bitmap, gaussianBlurRadius)
+            if (gradient) {
+                val highlight = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                    style = Paint.Style.FILL
+                    color = 0x33FFFFFF
+                }
+                canvas.drawRoundRect(
+                    RectF(rect.left, rect.top, rect.right, rect.top + rect.height() * 0.45f),
+                    rx, rx, highlight
+                )
+            }
+
+            if (useBlur) {
+                applyBoxBlur(bitmap, gaussianBlurRadius)
+            }
         }
 
         if (stroke > 0) {
@@ -107,6 +138,35 @@ object GlassBitmapRenderer {
         }
 
         return bitmap
+    }
+
+    /** Downscales [wallpaper] to at most [maxDim] on its longest side (~ intrinsic frost). */
+    private fun sampleForGlass(wallpaper: Bitmap, maxDim: Int): Bitmap? {
+        val bw = wallpaper.width
+        val bh = wallpaper.height
+        if (bw <= 0 || bh <= 0) return null
+        val scale = maxDim.toFloat() / maxOf(bw, bh)
+        if (scale >= 1f) return wallpaper
+        val w = (bw * scale).toInt().coerceAtLeast(1)
+        val h = (bh * scale).toInt().coerceAtLeast(1)
+        return Bitmap.createScaledBitmap(wallpaper, w, h, true)
+    }
+
+    /** Draws [src] centered over [dst], scaling to cover (cropping as needed). */
+    private fun drawCenterCover(canvas: Canvas, src: Bitmap, dst: RectF) {
+        val sw = src.width.toFloat()
+        val sh = src.height.toFloat()
+        val scale = maxOf(dst.width() / sw, dst.height() / sh)
+        val w = sw * scale
+        val h = sh * scale
+        val left = dst.centerX() - w / 2f
+        val top = dst.centerY() - h / 2f
+        canvas.drawBitmap(
+            src,
+            Rect(0, 0, src.width, src.height),
+            RectF(left, top, left + w, top + h),
+            Paint(Paint.FILTER_BITMAP_FLAG or Paint.ANTI_ALIAS_FLAG)
+        )
     }
 
     /** In-place separable box blur — safe on software canvases (unlike RenderNode). */

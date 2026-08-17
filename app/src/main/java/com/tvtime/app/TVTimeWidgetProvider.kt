@@ -9,6 +9,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.res.ColorStateList
 import android.graphics.Bitmap
+import android.graphics.Canvas
 import android.graphics.Color
 import android.os.Build
 import android.util.Log
@@ -86,7 +87,8 @@ class TVTimeWidgetProvider : AppWidgetProvider() {
                 alphaPercent = prefs.bgBlurOpacity,
                 gaussianBlurRadius = prefs.gaussianBlurRadius,
                 density = density,
-                gradient = isLiquid
+                gradient = isLiquid,
+                backdrop = wallpaperBackdrop(context)
             )
             views.setImageViewBitmap(R.id.iv_widget_bg, glass)
 
@@ -147,6 +149,30 @@ class TVTimeWidgetProvider : AppWidgetProvider() {
             fallback.setViewVisibility(R.id.hero_card, View.GONE)
             fallback.setTextViewText(R.id.tv_empty_p2, e.message ?: "exception")
             appWidgetManager.updateAppWidget(appWidgetId, fallback)
+        }
+    }
+
+    /** Best-effort capture of the system wallpaper as a small sample for the glass fill.
+     * Returns null when unavailable/transient (live wallpapers), so the widget falls back
+     * to the flat translucent glass. */
+    private fun wallpaperBackdrop(context: Context): Bitmap? {
+        try {
+            @Suppress("DEPRECATION")
+            val d = (context.getSystemService(Context.WALLPAPER_SERVICE) as WallpaperManager).drawable
+                ?: return null
+            val bw = d.intrinsicWidth
+            val bh = d.intrinsicHeight
+            if (bw <= 0 || bh <= 0) return null
+            val scale = minOf(1f, 320f / maxOf(bw, bh))
+            val w = (bw * scale).toInt().coerceAtLeast(1)
+            val h = (bh * scale).toInt().coerceAtLeast(1)
+            val bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
+            val c = Canvas(bmp)
+            d.setBounds(0, 0, w, h)
+            d.draw(c)
+            return bmp
+        } catch (_: Throwable) {
+            return null
         }
     }
 

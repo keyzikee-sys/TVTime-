@@ -32,7 +32,7 @@ object GlassPresets {
         ),
         GlassBitmapRenderer.PRESET_LIQUID to Preset(
             bgHex = "#CC0F2027", accentHex = "#FF00F2FE", borderHex = "#3303DAC5",
-            bgBlurOpacity = 70, cornerRadius = 24, borderThickness = 3
+            bgBlurOpacity = 50, cornerRadius = 24, borderThickness = 3
         )
     )
 
