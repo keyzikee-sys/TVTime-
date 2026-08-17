@@ -8,6 +8,7 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.res.ColorStateList
+import android.graphics.Bitmap
 import android.os.Build
 import android.util.Log
 import android.view.View
@@ -120,8 +121,11 @@ class TVTimeWidgetProvider : AppWidgetProvider() {
                 "TVTimeWidget",
                 "updateWidget failed for #$appWidgetId\n${Log.getStackTraceString(e)}"
             )
-            val fallback = RemoteViews(context.packageName, R.layout.widget_fallback)
-            fallback.setTextViewText(R.id.tv_fallback, "TVTime err: ${e.message}")
+            val fallback = RemoteViews(context.packageName, R.layout.widget_layout)
+            fallback.setImageViewBitmap(R.id.iv_widget_bg, Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888))
+            fallback.setTextViewText(R.id.tv_widget_header, "TVTime err")
+            fallback.setTextViewText(R.id.tv_count, e.message ?: "exception")
+            fallback.setTextViewText(R.id.tv_empty_p2, e.message ?: "exception")
             appWidgetManager.updateAppWidget(appWidgetId, fallback)
         }
     }
