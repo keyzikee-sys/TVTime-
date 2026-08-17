@@ -28,11 +28,13 @@ class WatchlistRemoteViewsFactory(
     override fun onDataSetChanged() {
         WatchlistStore.init(context)
         val type = intent.getStringExtra("list_type") ?: "watchlist"
-        items = if (type == "mystuff") {
+        val base = if (type == "mystuff") {
             WatchlistStore.getMyStuff()
         } else {
             WatchlistStore.getWatchlist()
         }
+        val skipFirst = intent.getBooleanExtra("skip_first", false)
+        items = if (skipFirst) base.drop(1) else base
     }
 
     override fun onDestroy() {}

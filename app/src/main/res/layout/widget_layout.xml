@@ -18,22 +18,106 @@
         android:layout_height="match_parent"
         android:orientation="vertical">
 
-        <TextView
-            android:id="@+id/tv_widget_header"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="My Stuff"
-            android:textColor="#4DD0E1"
-            android:textSize="13sp"
-            android:textStyle="bold"
-            android:paddingBottom="4dp" />
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <ImageView
+                android:id="@+id/iv_app_icon"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:src="@android:drawable/ic_menu_gallery" />
+
+            <TextView
+                android:id="@+id/tv_widget_header"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="My Stuff"
+                android:textColor="#4DD0E1"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:layout_marginStart="8dp" />
+
+            <View
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:layout_weight="1" />
+
+            <TextView
+                android:id="@+id/tv_count"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text=""
+                android:textColor="#B8C0CC"
+                android:textSize="12sp" />
+        </LinearLayout>
+
+        <FrameLayout
+            android:id="@+id/hero_card"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/hero_bg"
+            android:padding="12dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/tv_hero_tag"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="UP NEXT"
+                    android:textColor="#4DD0E1"
+                    android:textSize="10sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tv_hero_title"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text=""
+                    android:textColor="#FFFFFF"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:maxLines="1"
+                    android:ellipsize="end"
+                    android:layout_marginTop="3dp" />
+
+                <TextView
+                    android:id="@+id/tv_hero_sub"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text=""
+                    android:textColor="#C2CAD6"
+                    android:textSize="12sp"
+                    android:maxLines="1"
+                    android:ellipsize="end"
+                    android:layout_marginTop="2dp" />
+
+                <ProgressBar
+                    android:id="@+id/pb_hero_progress"
+                    style="?android:attr/progressBarStyleHorizontal"
+                    android:layout_width="match_parent"
+                    android:layout_height="3dp"
+                    android:layout_marginTop="8dp"
+                    android:max="100"
+                    android:progress="0"
+                    android:progressTint="#4DD0E1"
+                    android:backgroundTint="#333A44" />
+            </LinearLayout>
+        </FrameLayout>
 
         <ListView
             android:id="@+id/list_mystuff"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
-            android:layout_marginTop="4dp"
+            android:layout_marginTop="8dp"
             android:divider="@android:color/transparent"
             android:dividerHeight="6dp"
             android:scrollbars="none" />
@@ -44,7 +128,7 @@
             android:layout_height="0dp"
             android:layout_weight="1"
             android:gravity="center"
-            android:text="Nothing saved yet — add in the app"
+            android:text="Nothing saved yet — sign in &amp; Sync in the app"
             android:textColor="#B8C0CC"
             android:textSize="12sp" />
     </LinearLayout>
