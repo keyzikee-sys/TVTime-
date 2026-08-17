@@ -3,6 +3,7 @@ package com.tvtime.app
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.graphics.Color
 import android.widget.RemoteViews
 import android.widget.RemoteViewsService
 import android.appwidget.AppWidgetManager
