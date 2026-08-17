@@ -93,13 +93,24 @@ class TVTimeWidgetProvider : AppWidgetProvider() {
 
             try {
                 WatchlistStore.init(context)
-                val n = WatchlistStore.getMyStuff().size
+                val shows = WatchlistStore.getMyStuff()
                 views.setTextViewText(
                     R.id.tv_widget_header,
-                    if (n == 0) "My Stuff" else "My Stuff ($n)"
+                    if (shows.isEmpty()) "My Stuff" else "My Stuff (${shows.size})"
                 )
+                if (shows.isEmpty()) {
+                    views.setViewVisibility(R.id.hero_card, View.GONE)
+                } else {
+                    val top = shows[0]
+                    views.setTextViewText(R.id.tv_hero_tag, "UP NEXT")
+                    views.setTextViewText(R.id.tv_hero_title, top.title)
+                    views.setTextViewText(R.id.tv_hero_desc, top.subtitle)
+                    views.setProgressBar(R.id.pb_hero_progress, 100, top.progress, false)
+                    views.setViewVisibility(R.id.hero_card, View.VISIBLE)
+                }
             } catch (_: Exception) {
                 views.setTextViewText(R.id.tv_widget_header, "My Stuff")
+                views.setViewVisibility(R.id.hero_card, View.GONE)
             }
 
             val watchIntent = Intent(context, WatchDetailsActivity::class.java)
@@ -127,6 +138,7 @@ class TVTimeWidgetProvider : AppWidgetProvider() {
             val fallback = RemoteViews(context.packageName, R.layout.widget_layout)
             fallback.setImageViewBitmap(R.id.iv_widget_bg, Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888))
             fallback.setTextViewText(R.id.tv_widget_header, "TVTime err")
+            fallback.setViewVisibility(R.id.hero_card, View.GONE)
             fallback.setTextViewText(R.id.tv_empty_p2, e.message ?: "exception")
             appWidgetManager.updateAppWidget(appWidgetId, fallback)
         }
