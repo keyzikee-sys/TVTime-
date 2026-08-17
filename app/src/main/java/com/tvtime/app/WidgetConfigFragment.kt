@@ -23,6 +23,7 @@ class WidgetConfigFragment : Fragment() {
     private var currentBgHex = "#CC1E1E1E"
     private var currentAccentHex = "#4DD0E1"
     private var currentStrokeHex = "#3303DAC5"
+    private var currentListTextHex = "#FFFFFFFF"
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -60,6 +61,8 @@ class WidgetConfigFragment : Fragment() {
         val viewAccentPreview = view.findViewById<View>(R.id.view_accent_preview)
         val btnPickStroke = view.findViewById<Button>(R.id.btn_pick_stroke)
         val viewStrokePreview = view.findViewById<View>(R.id.view_stroke_preview)
+        val btnPickListText = view.findViewById<Button>(R.id.btn_pick_list_text)
+        val viewListTextPreview = view.findViewById<View>(R.id.view_list_text_preview)
 
         val tvBgBlur = view.findViewById<TextView>(R.id.tv_bg_blur_label)
         val tvGaussian = view.findViewById<TextView>(R.id.tv_gaussian_label)
@@ -73,6 +76,7 @@ class WidgetConfigFragment : Fragment() {
         currentBgHex = prefs.bgHexColor
         currentAccentHex = prefs.accentHexColor
         currentStrokeHex = prefs.borderHexColor
+        currentListTextHex = prefs.listTextColor
         // Ensure the service is always Tubi (spinner removed).
         prefs.selectedServicePackage = "com.tubitv"
 
@@ -80,6 +84,7 @@ class WidgetConfigFragment : Fragment() {
         etWidgetTitle?.setText(prefs.widgetTitle)
         updateColorView(viewAccentPreview, currentAccentHex)
         updateColorView(viewStrokePreview, currentStrokeHex)
+        updateColorView(viewListTextPreview, currentListTextHex)
 
         seekBgBlur?.progress = prefs.bgBlurOpacity
         seekGaussian?.progress = prefs.gaussianBlurRadius
@@ -254,6 +259,13 @@ class WidgetConfigFragment : Fragment() {
             }.show()
         }
 
+        btnPickListText?.setOnClickListener {
+            showColorPickerDialog(requireContext(), "Select List Font Color", currentListTextHex) { argbHex ->
+                currentListTextHex = argbHex
+                updateColorView(viewListTextPreview, argbHex)
+            }.show()
+        }
+
         btnSave?.setOnClickListener {
             val isNoBlur = rgPresets?.checkedRadioButtonId == R.id.rb_preset_liquid_noblur
             val selectedPreset = when (rgPresets?.checkedRadioButtonId) {
@@ -284,11 +296,13 @@ class WidgetConfigFragment : Fragment() {
                 WidgetPreferences(ctx, configureId).apply {
                     applyStyle(style)
                     widgetTitle = title
+                    listTextColor = currentListTextHex
                 }
             } else {
                 WidgetPreferences(ctx).apply {
                     applyStyle(style)
                     widgetTitle = title
+                    listTextColor = currentListTextHex
                 }
                 AppWidgetManager.getInstance(ctx)
                     .getAppWidgetIds(ComponentName(ctx, TVTimeWidgetProvider::class.java))
@@ -296,6 +310,7 @@ class WidgetConfigFragment : Fragment() {
                         WidgetPreferences(ctx, it).apply {
                             applyStyle(style)
                             widgetTitle = title
+                            listTextColor = currentListTextHex
                         }
                     }
             }

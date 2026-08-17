@@ -9,6 +9,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.res.ColorStateList
 import android.graphics.Bitmap
+import android.graphics.Color
 import android.os.Build
 import android.util.Log
 import android.view.View
@@ -91,6 +92,9 @@ class TVTimeWidgetProvider : AppWidgetProvider() {
 
             views.setTextColor(R.id.tv_widget_header, accent)
 
+            val listColor = ColorUtils.parseArgb(prefs.listTextColor) ?: Color.WHITE
+            views.setTextColor(R.id.tv_empty_p2, ColorUtils.withAlpha(listColor, 60))
+
             try {
                 WatchlistStore.init(context)
                 val shows = WatchlistStore.getMyStuff()
@@ -130,6 +134,7 @@ class TVTimeWidgetProvider : AppWidgetProvider() {
             views.setEmptyView(R.id.list_mystuff, R.id.tv_empty_p2)
 
             appWidgetManager.updateAppWidget(appWidgetId, views)
+            appWidgetManager.notifyAppWidgetViewDataChanged(appWidgetId, R.id.list_mystuff)
             Log.e("TVTimeWidget", "updateWidget OK for #$appWidgetId")
         } catch (e: Exception) {
             Log.e(

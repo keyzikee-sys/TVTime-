@@ -5,6 +5,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.widget.RemoteViews
 import android.widget.RemoteViewsService
+import android.appwidget.AppWidgetManager
 
 /**
  * Supplies the widget's show list (title + subtitle + progress) from WatchlistStore.
@@ -60,16 +61,27 @@ class WatchlistRemoteViewsFactory(
     override fun getViewAt(position: Int): RemoteViews {
         try {
             val views = RemoteViews(context.packageName, R.layout.widget_list_item)
+            val widgetId = intent.getIntExtra(
+                AppWidgetManager.EXTRA_APPWIDGET_ID,
+                WidgetPreferences.DEFAULT_ID
+            )
+            val listColor = ColorUtils.parseArgb(WidgetPreferences(context, widgetId).listTextColor)
+                ?: Color.WHITE
+            val subColor = ColorUtils.withAlpha(listColor, 60)
             if (items.isEmpty()) {
                 views.setTextViewText(R.id.tv_title, "No shows yet")
                 views.setTextViewText(R.id.tv_sub, "Add titles in the app")
                 views.setProgressBar(R.id.pb_show_progress, 100, 0, false)
+                views.setTextColor(R.id.tv_title, listColor)
+                views.setTextColor(R.id.tv_sub, subColor)
                 return views
             }
             val item = items[position]
             views.setTextViewText(R.id.tv_title, item.title)
             views.setTextViewText(R.id.tv_sub, item.subtitle)
             views.setProgressBar(R.id.pb_show_progress, 100, item.progress, false)
+            views.setTextColor(R.id.tv_title, listColor)
+            views.setTextColor(R.id.tv_sub, subColor)
             views.setOnClickFillInIntent(
                 R.id.widget_list_item_root,
                 Intent().apply { putExtra("watch_url", item.watchUrl) }
