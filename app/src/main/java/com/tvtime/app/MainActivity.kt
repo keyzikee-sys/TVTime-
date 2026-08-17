@@ -2,7 +2,6 @@ package com.tvtime.app
 
 import android.os.Bundle
 import android.widget.Button
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 
@@ -15,7 +14,6 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
         TubiAccount.init(this)
         WatchlistStore.init(this)
-        Toast.makeText(this, "BUILD 1720 hero", Toast.LENGTH_SHORT).show()
 
         val myStuffTab = findViewById<Button>(R.id.tab_mystuff)
         val syncingTab = findViewById<Button>(R.id.tab_syncing)
