@@ -26,38 +26,62 @@ class WatchlistRemoteViewsFactory(
     override fun onCreate() {}
 
     override fun onDataSetChanged() {
-        WatchlistStore.init(context)
-        val type = intent.getStringExtra("list_type") ?: "watchlist"
-        val base = if (type == "mystuff") {
-            WatchlistStore.getMyStuff()
-        } else {
-            WatchlistStore.getWatchlist()
+        try {
+            WatchlistStore.init(context)
+            val type = intent.getStringExtra("list_type") ?: "watchlist"
+            val base = if (type == "mystuff") {
+                WatchlistStore.getMyStuff()
+            } else {
+                WatchlistStore.getWatchlist()
+            }
+            val skipFirst = intent.getBooleanExtra("skip_first", false)
+            items = if (skipFirst) base.drop(1) else base
+        } catch (e: Exception) {
+            android.util.Log.e(
+                "TVTimeWidget",
+                "onDataSetChanged failed\n${android.util.Log.getStackTraceString(e)}"
+            )
+            items = emptyList()
         }
-        val skipFirst = intent.getBooleanExtra("skip_first", false)
-        items = if (skipFirst) base.drop(1) else base
     }
 
     override fun onDestroy() {}
 
-    override fun getCount(): Int = if (items.isEmpty()) 1 else items.size
+    override fun getCount(): Int = try {
+        if (items.isEmpty()) 1 else items.size
+    } catch (e: Exception) {
+        android.util.Log.e(
+            "TVTimeWidget",
+            "getCount failed\n${android.util.Log.getStackTraceString(e)}"
+        )
+        1
+    }
 
     override fun getViewAt(position: Int): RemoteViews {
-        val views = RemoteViews(context.packageName, R.layout.widget_list_item)
-        if (items.isEmpty()) {
-            views.setTextViewText(R.id.tv_title, "No shows yet")
-            views.setTextViewText(R.id.tv_sub, "Add titles in the app")
-            views.setProgressBar(R.id.pb_show_progress, 100, 0, false)
+        try {
+            val views = RemoteViews(context.packageName, R.layout.widget_list_item)
+            if (items.isEmpty()) {
+                views.setTextViewText(R.id.tv_title, "No shows yet")
+                views.setTextViewText(R.id.tv_sub, "Add titles in the app")
+                views.setProgressBar(R.id.pb_show_progress, 100, 0, false)
+                return views
+            }
+            val item = items[position]
+            views.setTextViewText(R.id.tv_title, item.title)
+            views.setTextViewText(R.id.tv_sub, item.subtitle)
+            views.setProgressBar(R.id.pb_show_progress, 100, item.progress, false)
+            views.setOnClickFillInIntent(
+                R.id.widget_list_item_root,
+                Intent().apply { putExtra("watch_url", item.watchUrl) }
+            )
             return views
+        } catch (e: Exception) {
+            android.util.Log.e(
+                "TVTimeWidget",
+                "getViewAt($position) failed\n${android.util.Log.getStackTraceString(e)}"
+            )
+            return RemoteViews(context.packageName, R.layout.widget_list_item)
         }
-        val item = items[position]
-        views.setTextViewText(R.id.tv_title, item.title)
-        views.setTextViewText(R.id.tv_sub, item.subtitle)
-        views.setProgressBar(R.id.pb_show_progress, 100, item.progress, false)
-        views.setOnClickFillInIntent(
-            R.id.widget_list_item_root,
-            Intent().apply { putExtra("watch_url", item.watchUrl) }
-        )
-        return views
     }
 
     override fun getLoadingView(): RemoteViews? = null
