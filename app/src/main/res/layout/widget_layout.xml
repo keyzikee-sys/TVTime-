@@ -59,7 +59,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:background="@drawable/hero_bg"
+            android:background="#1A2A2A3A"
             android:padding="12dp">
 
             <LinearLayout
