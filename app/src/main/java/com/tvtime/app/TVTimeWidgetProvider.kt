@@ -94,9 +94,12 @@ class TVTimeWidgetProvider : AppWidgetProvider() {
             try {
                 WatchlistStore.init(context)
                 val n = WatchlistStore.getMyStuff().size
-                views.setTextViewText(R.id.tv_count, if (n == 0) "" else "($n)")
+                views.setTextViewText(
+                    R.id.tv_widget_header,
+                    if (n == 0) "My Stuff" else "My Stuff ($n)"
+                )
             } catch (_: Exception) {
-                views.setTextViewText(R.id.tv_count, "")
+                views.setTextViewText(R.id.tv_widget_header, "My Stuff")
             }
 
             val watchIntent = Intent(context, WatchDetailsActivity::class.java)
@@ -124,7 +127,6 @@ class TVTimeWidgetProvider : AppWidgetProvider() {
             val fallback = RemoteViews(context.packageName, R.layout.widget_layout)
             fallback.setImageViewBitmap(R.id.iv_widget_bg, Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888))
             fallback.setTextViewText(R.id.tv_widget_header, "TVTime err")
-            fallback.setTextViewText(R.id.tv_count, e.message ?: "exception")
             fallback.setTextViewText(R.id.tv_empty_p2, e.message ?: "exception")
             appWidgetManager.updateAppWidget(appWidgetId, fallback)
         }
