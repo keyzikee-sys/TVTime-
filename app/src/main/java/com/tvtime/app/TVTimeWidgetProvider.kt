@@ -9,6 +9,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.res.ColorStateList
 import android.os.Build
+import android.util.Log
 import android.view.View
 import android.widget.RemoteViews
 
@@ -62,56 +63,67 @@ class TVTimeWidgetProvider : AppWidgetProvider() {
         appWidgetManager: AppWidgetManager,
         appWidgetId: Int
     ) {
-        val views = RemoteViews(context.packageName, R.layout.widget_layout)
-        val prefs = WidgetPreferences(context, appWidgetId)
-        val density = context.resources.displayMetrics.density
-
-        val isLiquid = GlassBitmapRenderer.isLiquid(prefs.glassPreset)
-
-        val dynamicColor = resolveDynamicAccent(context, prefs)
-        val accent = dynamicColor ?: (ColorUtils.parseArgb(prefs.accentHexColor) ?: ACCENT)
-        val borderHex = dynamicColor?.let { ColorUtils.toArgbHex(it) } ?: prefs.borderHexColor
-
-        val glass = GlassBitmapRenderer.renderLauncherContainer(
-            widthPx = WIDGET_WIDTH_PX,
-            heightPx = WIDGET_HEIGHT_PX,
-            bgHex = prefs.bgHexColor,
-            borderHex = borderHex,
-            cornerRadiusDp = prefs.cornerRadius,
-            borderThicknessDp = prefs.borderThickness,
-            alphaPercent = prefs.bgBlurOpacity,
-            gaussianBlurRadius = prefs.gaussianBlurRadius,
-            density = density,
-            gradient = isLiquid
-        )
-        views.setImageViewBitmap(R.id.iv_widget_bg, glass)
-
-        views.setTextColor(R.id.tv_widget_header, accent)
-
         try {
-            WatchlistStore.init(context)
-            val n = WatchlistStore.getMyStuff().size
-            views.setTextViewText(R.id.tv_count, if (n == 0) "" else "($n)")
-        } catch (_: Exception) {
-            views.setTextViewText(R.id.tv_count, "")
+            val views = RemoteViews(context.packageName, R.layout.widget_layout)
+            val prefs = WidgetPreferences(context, appWidgetId)
+            val density = context.resources.displayMetrics.density
+
+            val isLiquid = GlassBitmapRenderer.isLiquid(prefs.glassPreset)
+
+            val dynamicColor = resolveDynamicAccent(context, prefs)
+            val accent = dynamicColor ?: (ColorUtils.parseArgb(prefs.accentHexColor) ?: ACCENT)
+            val borderHex = dynamicColor?.let { ColorUtils.toArgbHex(it) } ?: prefs.borderHexColor
+
+            val glass = GlassBitmapRenderer.renderLauncherContainer(
+                widthPx = WIDGET_WIDTH_PX,
+                heightPx = WIDGET_HEIGHT_PX,
+                bgHex = prefs.bgHexColor,
+                borderHex = borderHex,
+                cornerRadiusDp = prefs.cornerRadius,
+                borderThicknessDp = prefs.borderThickness,
+                alphaPercent = prefs.bgBlurOpacity,
+                gaussianBlurRadius = prefs.gaussianBlurRadius,
+                density = density,
+                gradient = isLiquid
+            )
+            views.setImageViewBitmap(R.id.iv_widget_bg, glass)
+
+            views.setTextColor(R.id.tv_widget_header, accent)
+
+            try {
+                WatchlistStore.init(context)
+                val n = WatchlistStore.getMyStuff().size
+                views.setTextViewText(R.id.tv_count, if (n == 0) "" else "($n)")
+            } catch (_: Exception) {
+                views.setTextViewText(R.id.tv_count, "")
+            }
+
+            val watchIntent = Intent(context, WatchDetailsActivity::class.java)
+            val watchPendingIntent = PendingIntent.getActivity(
+                context, appWidgetId, watchIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+            views.setPendingIntentTemplate(R.id.list_mystuff, watchPendingIntent)
+
+            val myStuffIntent = Intent(context, WatchlistWidgetService::class.java).apply {
+                action = "com.tvtime.app.LIST_MYSTUFF"
+                putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
+                putExtra("list_type", "mystuff")
+            }
+            views.setRemoteAdapter(appWidgetId, R.id.list_mystuff, myStuffIntent)
+            views.setEmptyView(R.id.list_mystuff, R.id.tv_empty_p2)
+
+            appWidgetManager.updateAppWidget(appWidgetId, views)
+            Log.e("TVTimeWidget", "updateWidget OK for #$appWidgetId")
+        } catch (e: Exception) {
+            Log.e(
+                "TVTimeWidget",
+                "updateWidget failed for #$appWidgetId\n${Log.getStackTraceString(e)}"
+            )
+            val fallback = RemoteViews(context.packageName, R.layout.widget_fallback)
+            fallback.setTextViewText(R.id.tv_fallback, "TVTime err: ${e.message}")
+            appWidgetManager.updateAppWidget(appWidgetId, fallback)
         }
-
-        val watchIntent = Intent(context, WatchDetailsActivity::class.java)
-        val watchPendingIntent = PendingIntent.getActivity(
-            context, appWidgetId, watchIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-        views.setPendingIntentTemplate(R.id.list_mystuff, watchPendingIntent)
-
-        val myStuffIntent = Intent(context, WatchlistWidgetService::class.java).apply {
-            action = "com.tvtime.app.LIST_MYSTUFF"
-            putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
-            putExtra("list_type", "mystuff")
-        }
-        views.setRemoteAdapter(appWidgetId, R.id.list_mystuff, myStuffIntent)
-        views.setEmptyView(R.id.list_mystuff, R.id.tv_empty_p2)
-
-        appWidgetManager.updateAppWidget(appWidgetId, views)
     }
 
     /** Material You: on Android 12+ with dynamic color enabled, derive the accent from the
