@@ -8,6 +8,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        WatchlistStore.init(applicationContext)
 
         val layoutId = resources.getIdentifier("activity_main", "layout", packageName).takeIf { it != 0 }
             ?: android.R.layout.simple_list_item_1
@@ -25,13 +26,9 @@ class MainActivity : AppCompatActivity() {
             } catch (_: Exception) {}
         }
 
-        setupNav("nav_mystuff", containerId) { MyStuffFragment() }
-        setupNav("nav_syncing", containerId) { SyncingFragment() }
-        setupNav("nav_config", containerId) { WidgetConfigFragment() }
-        setupNav("widget_config", containerId) { WidgetConfigFragment() }
-        setupNav("btn_mystuff", containerId) { MyStuffFragment() }
-        setupNav("btn_syncing", containerId) { SyncingFragment() }
-        setupNav("btn_config", containerId) { WidgetConfigFragment() }
+        setupNav("tab_mystuff", containerId) { MyStuffFragment() }
+        setupNav("tab_syncing", containerId) { SyncingFragment() }
+        setupNav("tab_config", containerId) { WidgetConfigFragment() }
     }
 
     private fun setupNav(idName: String, containerId: Int, fragmentCreator: () -> androidx.fragment.app.Fragment) {

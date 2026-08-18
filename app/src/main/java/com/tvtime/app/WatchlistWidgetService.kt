@@ -5,19 +5,23 @@ import android.content.Intent
 import android.graphics.Color
 import android.widget.RemoteViews
 import android.widget.RemoteViewsService
-import com.tvtime.app.R
 
 class WatchlistWidgetService : RemoteViewsService() {
+
     override fun onGetViewFactory(intent: Intent): RemoteViewsFactory {
-        return WatchlistRemoteViewsFactory(this.applicationContext)
+        WatchlistStore.init(applicationContext)
+        return WatchlistRemoteViewsFactory(applicationContext)
     }
 }
 
-class WatchlistRemoteViewsFactory(private val context: Context) : RemoteViewsService.RemoteViewsFactory {
+class WatchlistRemoteViewsFactory(
+    private val context: Context
+) : RemoteViewsService.RemoteViewsFactory {
 
-    private val items = ArrayList<Pair<String, String>>()
-    private var titleColor: Int = Color.parseColor("#00E5FF")
-    private var subtitleColor: Int = Color.parseColor("#B0BEC5")
+    private val items = ArrayList<ShowItem>()
+
+    private var titleColor = Color.WHITE
+    private var subtitleColor = Color.parseColor("#B0BEC5")
 
     override fun onCreate() {
         loadData()
@@ -28,56 +32,54 @@ class WatchlistRemoteViewsFactory(private val context: Context) : RemoteViewsSer
     }
 
     private fun loadData() {
+        WatchlistStore.init(context)
+
         items.clear()
+        items.addAll(WatchlistStore.getMyStuff())
 
         val prefs = context.getSharedPreferences("tvtime_prefs", Context.MODE_PRIVATE)
 
-        titleColor = getSavedColor(prefs, "title_color", "text_color", "accent_color", defaultColor = "#00E5FF")
-        subtitleColor = getSavedColor(prefs, "subtitle_color", "subtext_color", defaultColor = "#B0BEC5")
+        titleColor = getSavedColor(
+            prefs,
+            "title_color",
+            "text_color",
+            "accent_color",
+            "#00E5FF"
+        )
 
-        val savedData = prefs.getStringSet("watchlist_items", null)
-
-        if (!savedData.isNullOrEmpty()) {
-            for (entry in savedData) {
-                val parts = entry.split("|")
-                if (parts.size >= 2) {
-                    items.add(Pair(parts[0], parts[1]))
-                } else if (parts.isNotEmpty()) {
-                    items.add(Pair(parts[0], "movie"))
-                }
-            }
-        }
-
-        if (items.isEmpty()) {
-            items.add(Pair("The Black-Eyed Children", "2025 · movie"))
-            items.add(Pair("Crybaby Bridge", "2026 · movie"))
-            items.add(Pair("Mr. Tomorrow", "2026 · movie"))
-            items.add(Pair("Never Blink", "2025 · movie"))
-        }
+        subtitleColor = getSavedColor(
+            prefs,
+            "subtitle_color",
+            "subtext_color",
+            "#B0BEC5"
+        )
     }
 
     private fun getSavedColor(
         prefs: android.content.SharedPreferences,
-        vararg keys: String,
-        defaultColor: String
+        vararg keys: String
     ): Int {
-        for (key in keys) {
+        val defaultColor = keys.last()
+
+        for (i in 0 until keys.size - 1) {
+            val key = keys[i]
+
             if (prefs.contains(key)) {
                 try {
                     return prefs.getInt(key, Color.parseColor(defaultColor))
-                } catch (e: ClassCastException) {
-                    val hex = prefs.getString(key, null)
-                    if (!hex.isNullOrEmpty()) {
-                        return try { Color.parseColor(hex) } catch (e: Exception) { Color.parseColor(defaultColor) }
+                } catch (_: Exception) {
+                    try {
+                        return Color.parseColor(
+                            prefs.getString(key, defaultColor)
+                                ?: defaultColor
+                        )
+                    } catch (_: Exception) {
                     }
                 }
             }
         }
-        return Color.parseColor(defaultColor)
-    }
 
-    override fun onDestroy() {
-        items.clear()
+        return Color.parseColor(defaultColor)
     }
 
     override fun getCount(): Int = items.size
@@ -87,25 +89,31 @@ class WatchlistRemoteViewsFactory(private val context: Context) : RemoteViewsSer
             return getLoadingView()
         }
 
-        val views = RemoteViews(context.packageName, R.layout.widget_list_item)
         val item = items[position]
 
-        views.setTextViewText(R.id.item_title, item.first)
-        views.setTextColor(R.id.item_title, titleColor)
+        return RemoteViews(
+            context.packageName,
+            R.layout.widget_list_item
+        ).apply {
+            setTextViewText(R.id.item_title, item.title)
+            setTextColor(R.id.item_title, titleColor)
 
-        views.setTextViewText(R.id.item_subtitle, item.second)
-        views.setTextColor(R.id.item_subtitle, subtitleColor)
+            setTextViewText(R.id.item_subtitle, item.subtitle)
+            setTextColor(R.id.item_subtitle, subtitleColor)
 
-        val fillInIntent = Intent()
-        views.setOnClickFillInIntent(R.id.item_container, fillInIntent)
-
-        return views
+            setOnClickFillInIntent(
+                R.id.item_container,
+                Intent()
+            )
+        }
     }
 
     override fun getLoadingView(): RemoteViews {
-        return RemoteViews(context.packageName, R.layout.widget_list_item).apply {
+        return RemoteViews(
+            context.packageName,
+            R.layout.widget_list_item
+        ).apply {
             setTextViewText(R.id.item_title, "Loading...")
-            setTextColor(R.id.item_title, titleColor)
             setTextViewText(R.id.item_subtitle, "")
         }
     }
@@ -115,4 +123,8 @@ class WatchlistRemoteViewsFactory(private val context: Context) : RemoteViewsSer
     override fun getItemId(position: Int): Long = position.toLong()
 
     override fun hasStableIds(): Boolean = true
+
+    override fun onDestroy() {
+        items.clear()
+    }
 }
