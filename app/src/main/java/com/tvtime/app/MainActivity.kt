@@ -1,57 +1,50 @@
 package com.tvtime.app
 
 import android.os.Bundle
-import android.widget.Button
+import android.view.View
 import androidx.appcompat.app.AppCompatActivity
-import androidx.fragment.app.Fragment
 
 class MainActivity : AppCompatActivity() {
 
-    private lateinit var tabs: List<Button>
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
-        TubiAccount.init(this)
-        WatchlistStore.init(this)
 
-        val myStuffTab = findViewById<Button>(R.id.tab_mystuff)
-        val syncingTab = findViewById<Button>(R.id.tab_syncing)
-        val configTab = findViewById<Button>(R.id.tab_config)
-        tabs = listOf(myStuffTab, syncingTab, configTab)
+        val layoutId = resources.getIdentifier("activity_main", "layout", packageName).takeIf { it != 0 }
+            ?: android.R.layout.simple_list_item_1
+        setContentView(layoutId)
 
-        val fragments = listOf(
-            MyStuffFragment(),
-            SyncingFragment(),
-            WidgetConfigFragment()
-        )
+        val containerId = resources.getIdentifier("fragment_container", "id", packageName).takeIf { it != 0 }
+            ?: resources.getIdentifier("content_frame", "id", packageName).takeIf { it != 0 }
+            ?: 0
 
-        val onTabClick = { index: Int ->
-            selectTab(index)
-            loadFragment(fragments[index])
+        if (savedInstanceState == null && containerId != 0) {
+            try {
+                supportFragmentManager.beginTransaction()
+                    .replace(containerId, MyStuffFragment())
+                    .commit()
+            } catch (_: Exception) {}
         }
 
-        myStuffTab.setOnClickListener { onTabClick(0) }
-        syncingTab.setOnClickListener { onTabClick(1) }
-        configTab.setOnClickListener { onTabClick(2) }
-
-        if (savedInstanceState == null) {
-            selectTab(0)
-            loadFragment(fragments[0])
-        }
+        setupNav("nav_mystuff", containerId) { MyStuffFragment() }
+        setupNav("nav_syncing", containerId) { SyncingFragment() }
+        setupNav("nav_config", containerId) { WidgetConfigFragment() }
+        setupNav("widget_config", containerId) { WidgetConfigFragment() }
+        setupNav("btn_mystuff", containerId) { MyStuffFragment() }
+        setupNav("btn_syncing", containerId) { SyncingFragment() }
+        setupNav("btn_config", containerId) { WidgetConfigFragment() }
     }
 
-    private fun selectTab(index: Int) {
-        tabs.forEachIndexed { i, button ->
-            val selected = i == index
-            button.setTextColor(if (selected) 0xFF4DD0E1.toInt() else 0xFFFFFFFF.toInt())
-            button.paint.isFakeBoldText = selected
+    private fun setupNav(idName: String, containerId: Int, fragmentCreator: () -> androidx.fragment.app.Fragment) {
+        if (containerId == 0) return
+        val resId = resources.getIdentifier(idName, "id", packageName)
+        if (resId != 0) {
+            findViewById<View>(resId)?.setOnClickListener {
+                try {
+                    supportFragmentManager.beginTransaction()
+                        .replace(containerId, fragmentCreator())
+                        .commit()
+                } catch (_: Exception) {}
+            }
         }
-    }
-
-    private fun loadFragment(fragment: Fragment) {
-        supportFragmentManager.beginTransaction()
-            .replace(R.id.fragment_container, fragment)
-            .commit()
     }
 }

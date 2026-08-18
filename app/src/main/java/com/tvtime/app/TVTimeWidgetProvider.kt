@@ -1,192 +1,37 @@
 package com.tvtime.app
 
-import android.app.PendingIntent
-import android.app.WallpaperManager
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
 import android.content.ComponentName
 import android.content.Context
-import android.content.Intent
-import android.content.res.ColorStateList
-import android.graphics.Bitmap
-import android.graphics.Canvas
-import android.graphics.Color
-import android.os.Build
-import android.util.Log
-import android.view.View
 import android.widget.RemoteViews
 
 class TVTimeWidgetProvider : AppWidgetProvider() {
 
+    override fun onUpdate(context: Context, appWidgetManager: AppWidgetManager, appWidgetIds: IntArray) {
+        for (appWidgetId in appWidgetIds) {
+            updateAppWidget(context, appWidgetManager, appWidgetId)
+        }
+    }
+
     companion object {
-        private const val WIDGET_WIDTH_PX = 400
-        private const val WIDGET_HEIGHT_PX = 200
-        private val ACCENT = ColorUtils.parseArgb("#4DD0E1")!!
-
-        /** Tell all live widgets to reload their show lists from WatchlistStore. */
-        fun notifyDataChanged(context: Context) {
-            val mgr = AppWidgetManager.getInstance(context)
-            val ids = mgr.getAppWidgetIds(
-                ComponentName(context, TVTimeWidgetProvider::class.java)
-            )
-            ids.forEach { mgr.notifyAppWidgetViewDataChanged(it, R.id.list_mystuff) }
-        }
-
-        /** Fully rebind every live widget and re-query the RemoteViewsService so it
-         * picks up replaced data. */
         fun updateAll(context: Context) {
-            val mgr = AppWidgetManager.getInstance(context)
-            val ids = mgr.getAppWidgetIds(
-                ComponentName(context, TVTimeWidgetProvider::class.java)
-            )
-            ids.forEach {
-                TVTimeWidgetProvider().updateWidget(context, mgr, it)
-                mgr.notifyAppWidgetViewDataChanged(it, R.id.list_mystuff)
+            val appWidgetManager = AppWidgetManager.getInstance(context)
+            val componentName = ComponentName(context, TVTimeWidgetProvider::class.java)
+            val appWidgetIds = appWidgetManager.getAppWidgetIds(componentName)
+            for (id in appWidgetIds) {
+                updateAppWidget(context, appWidgetManager, id)
             }
-            // Belt-and-suspenders: also push a full APPWIDGET_UPDATE so launchers that
-            // cache the collection re-bind it from scratch.
-            val intent = Intent(context, TVTimeWidgetProvider::class.java).apply {
-                action = AppWidgetManager.ACTION_APPWIDGET_UPDATE
-                putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, ids)
-            }
-            context.sendBroadcast(intent)
         }
-    }
 
-    override fun onUpdate(
-        context: Context,
-        appWidgetManager: AppWidgetManager,
-        appWidgetIds: IntArray
-    ) {
-        appWidgetIds.forEach { updateWidget(context, appWidgetManager, it) }
-    }
+        fun updateAppWidget(context: Context, appWidgetManager: AppWidgetManager, appWidgetId: Int) {
+            val pkg = context.packageName
+            val layoutId = context.resources.getIdentifier("widget_tv_time", "layout", pkg).takeIf { it != 0 }
+                ?: context.resources.getIdentifier("widget_layout", "layout", pkg).takeIf { it != 0 }
+                ?: android.R.layout.simple_list_item_1
 
-    private fun updateWidget(
-        context: Context,
-        appWidgetManager: AppWidgetManager,
-        appWidgetId: Int
-    ) {
-        try {
-            val views = RemoteViews(context.packageName, R.layout.widget_layout)
-            val prefs = WidgetPreferences(context, appWidgetId)
-            val density = context.resources.displayMetrics.density
-
-            val isLiquid = GlassBitmapRenderer.isLiquid(prefs.glassPreset)
-
-            val dynamicColor = resolveDynamicAccent(context, prefs)
-            val accent = dynamicColor ?: (ColorUtils.parseArgb(prefs.accentHexColor) ?: ACCENT)
-            val borderHex = dynamicColor?.let { ColorUtils.toArgbHex(it) } ?: prefs.borderHexColor
-
-            val glass = GlassBitmapRenderer.renderLauncherContainer(
-                widthPx = WIDGET_WIDTH_PX,
-                heightPx = WIDGET_HEIGHT_PX,
-                bgHex = prefs.bgHexColor,
-                borderHex = borderHex,
-                cornerRadiusDp = prefs.cornerRadius,
-                borderThicknessDp = prefs.borderThickness,
-                alphaPercent = prefs.bgBlurOpacity,
-                gaussianBlurRadius = prefs.gaussianBlurRadius,
-                density = density,
-                gradient = isLiquid,
-                backdrop = wallpaperBackdrop(context)
-            )
-            views.setImageViewBitmap(R.id.iv_widget_bg, glass)
-
-            views.setTextColor(R.id.tv_widget_header, accent)
-
-            val listColor = ColorUtils.parseArgb(prefs.listTextColor) ?: Color.WHITE
-            views.setTextColor(R.id.tv_empty_p2, ColorUtils.withAlpha(listColor, 60))
-
-            try {
-                WatchlistStore.init(context)
-                val shows = WatchlistStore.getMyStuff()
-                val title = prefs.widgetTitle.trim().ifEmpty { "My Stuff" }
-                views.setTextViewText(
-                    R.id.tv_widget_header,
-                    if (shows.isEmpty()) title else "$title (${shows.size})"
-                )
-                if (shows.isEmpty()) {
-                    views.setViewVisibility(R.id.hero_card, View.GONE)
-                } else {
-                    val top = shows[0]
-                    views.setTextViewText(R.id.tv_hero_tag, "UP NEXT")
-                    views.setTextViewText(R.id.tv_hero_title, top.title)
-                    views.setTextViewText(R.id.tv_hero_desc, top.subtitle)
-                    views.setProgressBar(R.id.pb_hero_progress, 100, top.progress, false)
-                    views.setViewVisibility(R.id.hero_card, View.VISIBLE)
-                }
-            } catch (_: Exception) {
-                views.setTextViewText(R.id.tv_widget_header, "My Stuff")
-                views.setViewVisibility(R.id.hero_card, View.GONE)
-            }
-
-            val watchIntent = Intent(context, WatchDetailsActivity::class.java)
-            val watchPendingIntent = PendingIntent.getActivity(
-                context, appWidgetId, watchIntent,
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-            )
-            views.setPendingIntentTemplate(R.id.list_mystuff, watchPendingIntent)
-
-            val myStuffIntent = Intent(context, WatchlistWidgetService::class.java).apply {
-                action = "com.tvtime.app.LIST_MYSTUFF"
-                putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
-                putExtra("list_type", "mystuff")
-            }
-            views.setRemoteAdapter(appWidgetId, R.id.list_mystuff, myStuffIntent)
-            views.setEmptyView(R.id.list_mystuff, R.id.tv_empty_p2)
-
+            val views = RemoteViews(pkg, layoutId)
             appWidgetManager.updateAppWidget(appWidgetId, views)
-            appWidgetManager.notifyAppWidgetViewDataChanged(appWidgetId, R.id.list_mystuff)
-            Log.e("TVTimeWidget", "updateWidget OK for #$appWidgetId")
-        } catch (e: Exception) {
-            Log.e(
-                "TVTimeWidget",
-                "updateWidget failed for #$appWidgetId\n${Log.getStackTraceString(e)}"
-            )
-            val fallback = RemoteViews(context.packageName, R.layout.widget_layout)
-            fallback.setImageViewBitmap(R.id.iv_widget_bg, Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888))
-            fallback.setTextViewText(R.id.tv_widget_header, "TVTime err")
-            fallback.setViewVisibility(R.id.hero_card, View.GONE)
-            fallback.setTextViewText(R.id.tv_empty_p2, e.message ?: "exception")
-            appWidgetManager.updateAppWidget(appWidgetId, fallback)
-        }
-    }
-
-    /** Best-effort capture of the system wallpaper as a small sample for the glass fill.
-     * Returns null when unavailable/transient (live wallpapers), so the widget falls back
-     * to the flat translucent glass. */
-    private fun wallpaperBackdrop(context: Context): Bitmap? {
-        try {
-            @Suppress("DEPRECATION")
-            val d = (context.getSystemService(Context.WALLPAPER_SERVICE) as WallpaperManager).drawable
-                ?: return null
-            val bw = d.intrinsicWidth
-            val bh = d.intrinsicHeight
-            if (bw <= 0 || bh <= 0) return null
-            val scale = minOf(1f, 320f / maxOf(bw, bh))
-            val w = (bw * scale).toInt().coerceAtLeast(1)
-            val h = (bh * scale).toInt().coerceAtLeast(1)
-            val bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
-            val c = Canvas(bmp)
-            d.setBounds(0, 0, w, h)
-            d.draw(c)
-            return bmp
-        } catch (_: Throwable) {
-            return null
-        }
-    }
-
-    /** Material You: on Android 12+ with dynamic color enabled, derive the accent from the
-     * system wallpaper (primary color). Returns null when dynamic isn't available. */
-    private fun resolveDynamicAccent(context: Context, prefs: WidgetPreferences): Int? {
-        if (!prefs.useDynamicColor) return null
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return null
-        return try {
-            val wm = context.getSystemService(Context.WALLPAPER_SERVICE) as WallpaperManager
-            val colors = wm.getWallpaperColors(WallpaperManager.FLAG_SYSTEM)
-            colors?.primaryColor?.toArgb()
-        } catch (_: Exception) {
-            null
         }
     }
 }

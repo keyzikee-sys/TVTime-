@@ -1,16 +1,11 @@
 package com.tvtime.app
 
+import android.app.Activity
 import android.appwidget.AppWidgetManager
 import android.content.Intent
 import android.os.Bundle
-import androidx.appcompat.app.AppCompatActivity
 
-/**
- * Shown by the launcher when the user adds the TVTime widget, so they can style it
- * before it appears on the home screen. Reuses [WidgetConfigFragment]; once the user
- * saves, [finishConfigure] returns RESULT_OK with the widget id.
- */
-class WidgetConfigureActivity : AppCompatActivity() {
+class WidgetConfigActivity : Activity() {
 
     private var appWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID
 
@@ -18,35 +13,29 @@ class WidgetConfigureActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setResult(RESULT_CANCELED)
 
-        appWidgetId = intent?.getIntExtra(
-            AppWidgetManager.EXTRA_APPWIDGET_ID,
-            AppWidgetManager.INVALID_APPWIDGET_ID
-        ) ?: AppWidgetManager.INVALID_APPWIDGET_ID
+        val layoutId = resources.getIdentifier("activity_widget_config", "layout", packageName).takeIf { it != 0 }
+            ?: resources.getIdentifier("widget_config", "layout", packageName).takeIf { it != 0 }
+            ?: android.R.layout.simple_list_item_1
+
+        setContentView(layoutId)
+
+        val extras = intent.extras
+        if (extras != null) {
+            appWidgetId = extras.getInt(
+                AppWidgetManager.EXTRA_APPWIDGET_ID,
+                AppWidgetManager.INVALID_APPWIDGET_ID
+            )
+        }
 
         if (appWidgetId == AppWidgetManager.INVALID_APPWIDGET_ID) {
             finish()
             return
         }
 
-        if (savedInstanceState == null) {
-            supportFragmentManager.beginTransaction()
-                .replace(
-                    android.R.id.content,
-                    WidgetConfigFragment().apply {
-                        arguments = Bundle().apply {
-                            putInt(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
-                        }
-                    }
-                )
-                .commit()
-        }
-    }
-
-    fun finishConfigure() {
-        val result = Intent().apply {
+        val resultValue = Intent().apply {
             putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
         }
-        setResult(RESULT_OK, result)
+        setResult(RESULT_OK, resultValue)
         finish()
     }
 }
