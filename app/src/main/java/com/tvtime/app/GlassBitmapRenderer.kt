@@ -113,20 +113,24 @@ object GlassBitmapRenderer {
             canvas.drawRoundRect(rect, rx, rx, fillPaint)
 
             if (gradient) {
-                val highlight = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                val sheen = Paint(Paint.ANTI_ALIAS_FLAG).apply {
                     style = Paint.Style.FILL
-                    color = 0x33FFFFFF
+                    shader = LinearGradient(
+                        0f, 0f,
+                        widthPx.toFloat(), heightPx.toFloat() * 0.65f,
+                        0x55FFFFFF,
+                        0x00FFFFFF,
+                        Shader.TileMode.CLAMP
+                    )
                 }
-                canvas.drawRoundRect(
-                    RectF(rect.left, rect.top, rect.right, rect.top + rect.height() * 0.45f),
-                    rx, rx, highlight
-                )
+                canvas.drawRoundRect(rect, rx, rx, sheen)
             }
 
             if (useBlur) {
                 applyBoxBlur(bitmap, gaussianBlurRadius)
             }
         }
+
 
         if (stroke > 0) {
             val borderPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {

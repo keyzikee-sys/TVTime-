@@ -195,11 +195,11 @@ class WidgetConfigFragment : Fragment() {
 
         rgGlassPresets.setOnCheckedChangeListener { _, checkedId ->
             when (checkedId) {
-                R.id.rb_frosted_glass -> applyPreset(80, 20, Color.parseColor("#FF007F"), Color.parseColor("#00E5FF"), Color.parseColor("#1B162E"), 15, true)
-                R.id.rb_dark_obsidian -> applyPreset(95, 30, Color.parseColor("#FFFFFF"), Color.parseColor("#111111"), Color.parseColor("#080808"), 5, true)
-                R.id.rb_tinted_neon -> applyPreset(70, 28, Color.parseColor("#FF007F"), Color.parseColor("#00E5FF"), Color.parseColor("#200515"), 20, true)
-                R.id.rb_liquid_blur -> applyPreset(65, 35, Color.parseColor("#00E5FF"), Color.parseColor("#FF007F"), Color.parseColor("#0A192F"), 25, true)
-                R.id.rb_liquid_no_blur -> applyPreset(85, 28, Color.parseColor("#FF007F"), Color.parseColor("#008080"), Color.parseColor("#1B162E"), 0, false)
+                R.id.rb_frosted_glass -> applyPreset(80, 20, Color.WHITE, Color.parseColor("#FF007F"), Color.parseColor("#00E5FF"), Color.parseColor("#1B162E"), 15, true)
+                R.id.rb_dark_obsidian -> applyPreset(95, 30, Color.WHITE, Color.WHITE, Color.parseColor("#111111"), Color.parseColor("#080808"), 5, true)
+                R.id.rb_tinted_neon -> applyPreset(70, 28, Color.WHITE, Color.parseColor("#FF007F"), Color.parseColor("#00E5FF"), Color.parseColor("#200515"), 20, true)
+                R.id.rb_liquid_blur -> applyPreset(30, 28, Color.WHITE, Color.parseColor("#FF4FA3"), Color.parseColor("#44FFFFFF"), Color.parseColor("#FF4FA3"), 8, true)
+                R.id.rb_liquid_no_blur -> applyPreset(85, 28, Color.WHITE, Color.parseColor("#FF007F"), Color.parseColor("#008080"), Color.parseColor("#1B162E"), 0, false)
             }
             sbCornerRadius.progress = cornerRadiusDp
             sbBgOpacity.progress = bgAlphaPercent
@@ -248,6 +248,19 @@ class WidgetConfigFragment : Fragment() {
                 putBoolean("use_dynamic_color", switchDynamicColor.isChecked)
             }.commit()
 
+            // Save visual settings to the widget-specific preferences used by the renderer
+            val widgetPrefs = WidgetPreferences(context, appWidgetId)
+            widgetPrefs.bgBlurOpacity = bgAlphaPercent
+            widgetPrefs.gaussianBlurRadius = blurRadiusDp
+            widgetPrefs.borderThickness = strokeThicknessDp
+            widgetPrefs.cornerRadius = cornerRadiusDp
+            widgetPrefs.bgHexColor = String.format("#%08X", selectedBgColor)
+            widgetPrefs.accentHexColor = String.format("#%08X", selectedAccentColor)
+            widgetPrefs.borderHexColor = String.format("#%08X", selectedStrokeColor)
+            widgetPrefs.glassPreset = when {
+                isBlurEnabled && blurRadiusDp > 0 -> GlassBitmapRenderer.PRESET_LIQUID
+                else -> GlassBitmapRenderer.PRESET_LIQUID_NOBLUR
+            }
             val appWidgetManager = AppWidgetManager.getInstance(context)
             val componentName = ComponentName(context, TVTimeWidgetProvider::class.java)
             val allWidgetIds = appWidgetManager.getAppWidgetIds(componentName)
@@ -286,6 +299,7 @@ class WidgetConfigFragment : Fragment() {
         opacity: Int, 
         radius: Int, 
         fontColor: Int,
+        accentColor: Int,
         strokeColor: Int, 
         bgColor: Int, 
         blurRadius: Int, 
@@ -294,6 +308,7 @@ class WidgetConfigFragment : Fragment() {
         bgAlphaPercent = opacity
         cornerRadiusDp = radius
         selectedFontColor = fontColor
+        selectedAccentColor = accentColor
         selectedStrokeColor = strokeColor
         selectedBgColor = bgColor
         blurRadiusDp = blurRadius

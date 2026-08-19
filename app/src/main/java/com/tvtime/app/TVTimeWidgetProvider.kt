@@ -18,6 +18,16 @@ class TVTimeWidgetProvider : AppWidgetProvider() {
             updateAppWidget(context, appWidgetManager, appWidgetId)
         }
     }
+    override fun onAppWidgetOptionsChanged(
+        context: Context,
+        appWidgetManager: AppWidgetManager,
+        appWidgetId: Int,
+        newOptions: android.os.Bundle
+    ) {
+        super.onAppWidgetOptionsChanged(context, appWidgetManager, appWidgetId, newOptions)
+        updateAppWidget(context, appWidgetManager, appWidgetId)
+    }
+
 
     companion object {
 
@@ -44,11 +54,14 @@ class TVTimeWidgetProvider : AppWidgetProvider() {
             // Load widget settings
             val prefs = WidgetPreferences(context, appWidgetId)
             val density = context.resources.displayMetrics.density
+            val options = appWidgetManager.getAppWidgetOptions(appWidgetId)
+            android.util.Log.d("TVTimeWidget", "Widget size: minW=${options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH)}dp minH=${options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT)}dp maxW=${options.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_WIDTH)}dp maxH=${options.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT)}dp")
+
 
             // Glass background
             val glass = GlassBitmapRenderer.renderLauncherContainer(
-                widthPx = 800,
-                heightPx = 500,
+                widthPx = (options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 250) * density).toInt().coerceAtLeast(1),
+                heightPx = (options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 110) * density).toInt().coerceAtLeast(1),
                 bgHex = prefs.bgHexColor,
                 borderHex = prefs.borderHexColor,
                 cornerRadiusDp = prefs.cornerRadius,
@@ -56,7 +69,7 @@ class TVTimeWidgetProvider : AppWidgetProvider() {
                 alphaPercent = prefs.bgBlurOpacity,
                 gaussianBlurRadius = prefs.gaussianBlurRadius,
                 density = density,
-                gradient = GlassBitmapRenderer.isLiquid(prefs.glassPreset)
+                gradient = GlassBitmapRenderer.isLiquid(prefs.glassPreset),
             )
 
             views.setImageViewBitmap(R.id.iv_widget_bg, glass)
