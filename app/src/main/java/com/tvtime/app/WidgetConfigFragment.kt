@@ -21,22 +21,23 @@ import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.SwitchCompat
 import androidx.fragment.app.Fragment
-import com.tvtime.app.R
 
 class WidgetConfigFragment : Fragment() {
 
     private var appWidgetId: Int = 0
 
-    private var selectedFontColor: Int = Color.parseColor("#FF007F")
-    private var selectedAccentColor: Int = Color.parseColor("#00E5FF")
-    private var selectedStrokeColor: Int = Color.parseColor("#008080")
-    private var selectedBgColor: Int = Color.parseColor("#1B162E")
-    
-    private var strokeThicknessDp: Int = 2
-    private var cornerRadiusDp: Int = 28
-    private var bgAlphaPercent: Int = 80
-    private var blurRadiusDp: Int = 15
-    private var isBlurEnabled: Boolean = true
+    private var selectedFontColor = Color.parseColor("#FFFFFFFF")
+    private var selectedAccentColor = Color.parseColor("#00E5FF")
+    private var selectedStrokeColor = Color.parseColor("#008080")
+    private var selectedBgColor = Color.parseColor("#1B162E")
+
+    private var strokeThicknessDp = 2
+    private var cornerRadiusDp = 28
+    private var bgAlphaPercent = 80
+    private var blurRadiusDp = 15
+    private var isBlurEnabled = true
+
+    private var contentSource = WidgetPreferences.CONTENT_MY_STUFF
 
     private lateinit var previewCardContainer: FrameLayout
     private lateinit var previewTitle: TextView
@@ -50,356 +51,492 @@ class WidgetConfigFragment : Fragment() {
     private lateinit var tvBgOpacity: TextView
     private lateinit var tvBlurRadius: TextView
 
+    private var contentSourceButton: Button? = null
+    private var contentSourceLabel: TextView? = null
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
-        return inflater.inflate(R.layout.fragment_widget_config, container, false)
+    ): View {
+        return inflater.inflate(
+            R.layout.fragment_widget_config,
+            container,
+            false
+        )
     }
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+    override fun onViewCreated(
+        view: View,
+        savedInstanceState: Bundle?
+    ) {
         super.onViewCreated(view, savedInstanceState)
 
-        val activityIntent = requireActivity().intent
-        val extras = activityIntent?.extras
-        if (extras != null) {
-            appWidgetId = extras.getInt(
+        appWidgetId = requireActivity()
+            .intent
+            .getIntExtra(
                 AppWidgetManager.EXTRA_APPWIDGET_ID,
-                0
+                WidgetPreferences.DEFAULT_ID
             )
+
+        previewCardContainer =
+            view.findViewById(R.id.preview_card_container)
+
+        previewTitle =
+            view.findViewById(R.id.preview_title)
+
+        previewFontBox =
+            view.findViewById(R.id.preview_font_box)
+
+        previewAccentBox =
+            view.findViewById(R.id.preview_accent_box)
+
+        previewStrokeBox =
+            view.findViewById(R.id.preview_stroke_box)
+
+        previewBgBox =
+            view.findViewById(R.id.preview_bg_box)
+
+        tvStrokeThickness =
+            view.findViewById(R.id.tv_stroke_thickness)
+
+        tvCornerRadius =
+            view.findViewById(R.id.tv_corner_radius)
+
+        tvBgOpacity =
+            view.findViewById(R.id.tv_bg_opacity)
+
+        tvBlurRadius =
+            view.findViewById(R.id.tv_blur_radius)
+
+        /*
+         * These two are optional.
+         *
+         * That means the configuration screen will still work
+         * even if the current XML does not contain the content-source
+         * controls yet.
+         */
+        contentSourceButton =
+            findOptionalButton(view, "btn_content_source")
+
+        contentSourceLabel =
+            findOptionalTextView(view, "tv_content_source")
+
+        loadSettings(view)
+        setupControls(view)
+        updateContentSourceLabel()
+        updatePreview()
+    }
+
+    private fun findOptionalButton(
+        root: View,
+        idName: String
+    ): Button? {
+
+        val id = resources.getIdentifier(
+            idName,
+            "id",
+            requireContext().packageName
+        )
+
+        if (id == 0) {
+            return null
         }
 
-        previewCardContainer = view.findViewById(R.id.preview_card_container)
-        previewTitle = view.findViewById(R.id.preview_title)
-        previewFontBox = view.findViewById(R.id.preview_font_box)
-        previewAccentBox = view.findViewById(R.id.preview_accent_box)
-        previewStrokeBox = view.findViewById(R.id.preview_stroke_box)
-        previewBgBox = view.findViewById(R.id.preview_bg_box)
+        return root.findViewById(id)
+    }
 
-        tvStrokeThickness = view.findViewById(R.id.tv_stroke_thickness)
-        tvCornerRadius = view.findViewById(R.id.tv_corner_radius)
-        tvBgOpacity = view.findViewById(R.id.tv_bg_opacity)
-        tvBlurRadius = view.findViewById(R.id.tv_blur_radius)
+    private fun findOptionalTextView(
+        root: View,
+        idName: String
+    ): TextView? {
 
-        val switchDynamicColor = view.findViewById<SwitchCompat>(R.id.switch_dynamic_color)
-        val switchEnableBlur = view.findViewById<SwitchCompat>(R.id.switch_enable_blur)
-        val rgGlassPresets = view.findViewById<RadioGroup>(R.id.rg_glass_presets)
+        val id = resources.getIdentifier(
+            idName,
+            "id",
+            requireContext().packageName
+        )
 
-        val sbStrokeThickness = view.findViewById<SeekBar>(R.id.sb_stroke_thickness)
-        val sbCornerRadius = view.findViewById<SeekBar>(R.id.sb_corner_radius)
-        val sbBgOpacity = view.findViewById<SeekBar>(R.id.sb_bg_opacity)
-        val sbBlurRadius = view.findViewById<SeekBar>(R.id.sb_blur_radius)
+        if (id == 0) {
+            return null
+        }
 
-        val btnFontColor = view.findViewById<Button>(R.id.btn_font_color)
-        val btnAccentColor = view.findViewById<Button>(R.id.btn_accent_color)
-        val btnStrokeColor = view.findViewById<Button>(R.id.btn_stroke_color)
-        val btnBgColor = view.findViewById<Button>(R.id.btn_bg_color)
-        val saveButton = view.findViewById<Button>(R.id.btn_save_config)
+        return root.findViewById(id)
+    }
 
-        val prefs = requireContext().getSharedPreferences("tvtime_prefs", Context.MODE_PRIVATE)
+    private fun loadSettings(view: View) {
 
-        // Read all colors checking fallback aliases
-        selectedFontColor = prefs.getInt("font_color", prefs.getInt("text_color", prefs.getInt("title_color", Color.parseColor("#FF007F"))))
-        selectedAccentColor = prefs.getInt("accent_color", prefs.getInt("header_color", prefs.getInt("button_color", Color.parseColor("#00E5FF"))))
-        selectedStrokeColor = prefs.getInt("stroke_color", prefs.getInt("border_color", Color.parseColor("#008080")))
-        selectedBgColor = prefs.getInt("bg_color", prefs.getInt("background_color", Color.parseColor("#1B162E")))
+        val context = requireContext()
 
-        strokeThicknessDp = prefs.getInt("stroke_thickness", 2)
-        cornerRadiusDp = prefs.getInt("corner_radius", 28)
-        bgAlphaPercent = prefs.getInt("bg_opacity", 80)
-        blurRadiusDp = prefs.getInt("blur_radius", 15)
-        isBlurEnabled = prefs.getBoolean("enable_blur", true)
+        val widgetPrefs =
+            WidgetPreferences(
+                context,
+                appWidgetId
+            )
 
-        sbStrokeThickness.progress = strokeThicknessDp
-        sbCornerRadius.progress = cornerRadiusDp
-        sbBgOpacity.progress = bgAlphaPercent
-        sbBlurRadius.progress = blurRadiusDp
-        switchEnableBlur.isChecked = isBlurEnabled
+        val legacyPrefs =
+            context.getSharedPreferences(
+                "tvtime_prefs",
+                Context.MODE_PRIVATE
+            )
 
-        updatePreview()
+        selectedFontColor =
+            getSavedColor(
+                legacyPrefs,
+                "font_color",
+                "text_color",
+                "title_color",
+                "#FFFFFFFF"
+            )
 
-        btnFontColor.setOnClickListener {
-            showHexColorPicker("Font / Text Color", selectedFontColor) { color ->
+        selectedAccentColor =
+            getSavedColor(
+                legacyPrefs,
+                "accent_color",
+                "header_color",
+                "button_color",
+                "#00E5FF"
+            )
+
+        selectedStrokeColor =
+            getSavedColor(
+                legacyPrefs,
+                "stroke_color",
+                "border_color",
+                "#008080"
+            )
+
+        selectedBgColor =
+            getSavedColor(
+                legacyPrefs,
+                "bg_color",
+                "background_color",
+                "#1B162E"
+            )
+
+        strokeThicknessDp =
+            legacyPrefs.getInt(
+                "stroke_thickness",
+                widgetPrefs.borderThickness
+            )
+
+        cornerRadiusDp =
+            legacyPrefs.getInt(
+                "corner_radius",
+                widgetPrefs.cornerRadius
+            )
+
+        bgAlphaPercent =
+            legacyPrefs.getInt(
+                "bg_opacity",
+                widgetPrefs.bgBlurOpacity
+            )
+
+        blurRadiusDp =
+            legacyPrefs.getInt(
+                "blur_radius",
+                widgetPrefs.gaussianBlurRadius
+            )
+
+        isBlurEnabled =
+            legacyPrefs.getBoolean(
+                "enable_blur",
+                true
+            )
+
+        contentSource =
+            widgetPrefs.contentSource
+    }
+
+    private fun setupControls(view: View) {
+
+        val switchDynamicColor =
+            view.findViewById<SwitchCompat>(
+                R.id.switch_dynamic_color
+            )
+
+        val switchEnableBlur =
+            view.findViewById<SwitchCompat>(
+                R.id.switch_enable_blur
+            )
+
+        val radioGroup =
+            view.findViewById<RadioGroup>(
+                R.id.rg_glass_presets
+            )
+
+        val sbStroke =
+            view.findViewById<SeekBar>(
+                R.id.sb_stroke_thickness
+            )
+
+        val sbCorner =
+            view.findViewById<SeekBar>(
+                R.id.sb_corner_radius
+            )
+
+        val sbOpacity =
+            view.findViewById<SeekBar>(
+                R.id.sb_bg_opacity
+            )
+
+        val sbBlur =
+            view.findViewById<SeekBar>(
+                R.id.sb_blur_radius
+            )
+
+        val btnFont =
+            view.findViewById<Button>(
+                R.id.btn_font_color
+            )
+
+        val btnAccent =
+            view.findViewById<Button>(
+                R.id.btn_accent_color
+            )
+
+        val btnStroke =
+            view.findViewById<Button>(
+                R.id.btn_stroke_color
+            )
+
+        val btnBackground =
+            view.findViewById<Button>(
+                R.id.btn_bg_color
+            )
+
+        val saveButton =
+            view.findViewById<Button>(
+                R.id.btn_save_config
+            )
+
+        /*
+         * Initial slider values.
+         */
+        sbStroke.progress =
+            strokeThicknessDp.coerceIn(
+                0,
+                sbStroke.max
+            )
+
+        sbCorner.progress =
+            cornerRadiusDp.coerceIn(
+                0,
+                sbCorner.max
+            )
+
+        sbOpacity.progress =
+            bgAlphaPercent.coerceIn(
+                0,
+                sbOpacity.max
+            )
+
+        sbBlur.progress =
+            blurRadiusDp.coerceIn(
+                0,
+                sbBlur.max
+            )
+
+        switchEnableBlur.isChecked =
+            isBlurEnabled
+
+        /*
+         * Content source.
+         */
+        contentSourceButton?.setOnClickListener {
+            showContentSourcePicker()
+        }
+
+        /*
+         * Color buttons.
+         */
+        btnFont.setOnClickListener {
+            showHexColorPicker(
+                "Font / Text Color",
+                selectedFontColor
+            ) { color ->
                 selectedFontColor = color
                 updatePreview()
             }
         }
 
-        btnAccentColor.setOnClickListener {
-            showHexColorPicker("Accent Color", selectedAccentColor) { color ->
+        btnAccent.setOnClickListener {
+            showHexColorPicker(
+                "Accent Color",
+                selectedAccentColor
+            ) { color ->
                 selectedAccentColor = color
                 updatePreview()
             }
         }
 
-        btnStrokeColor.setOnClickListener {
-            showHexColorPicker("Stroke (Border) Color", selectedStrokeColor) { color ->
+        btnStroke.setOnClickListener {
+            showHexColorPicker(
+                "Stroke / Border Color",
+                selectedStrokeColor
+            ) { color ->
                 selectedStrokeColor = color
                 updatePreview()
             }
         }
 
-        btnBgColor.setOnClickListener {
-            showHexColorPicker("Background Color", selectedBgColor) { color ->
+        btnBackground.setOnClickListener {
+            showHexColorPicker(
+                "Background Color",
+                selectedBgColor
+            ) { color ->
                 selectedBgColor = color
                 updatePreview()
             }
         }
 
-        switchEnableBlur.setOnCheckedChangeListener { _, isChecked ->
-            isBlurEnabled = isChecked
-            sbBlurRadius.isEnabled = isChecked
+        /*
+         * Blur switch.
+         */
+        switchEnableBlur.setOnCheckedChangeListener {
+                _,
+                checked ->
+
+            isBlurEnabled = checked
+
+            sbBlur.isEnabled = checked
+
             updatePreview()
         }
 
-        sbBlurRadius.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                blurRadiusDp = progress
-                tvBlurRadius.text = "Blur Radius / Intensity: ${progress}dp"
-                updatePreview()
-            }
-            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
-            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
-        })
+        sbBlur.isEnabled =
+            isBlurEnabled
 
-        sbStrokeThickness.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                strokeThicknessDp = progress
-                tvStrokeThickness.text = "Stroke Thickness: ${progress}dp"
-                updatePreview()
-            }
-            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
-            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
-        })
+        /*
+         * Stroke thickness.
+         */
+        sbStroke.setOnSeekBarChangeListener(
+            object : SeekBar.OnSeekBarChangeListener {
 
-        sbCornerRadius.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                cornerRadiusDp = progress
-                tvCornerRadius.text = "Corner Radius: ${progress}dp"
-                updatePreview()
-            }
-            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
-            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
-        })
+                override fun onProgressChanged(
+                    seekBar: SeekBar?,
+                    progress: Int,
+                    fromUser: Boolean
+                ) {
 
-        sbBgOpacity.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                bgAlphaPercent = progress
-                tvBgOpacity.text = "Background Opacity / Alpha: $progress%"
-                updatePreview()
-            }
-            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
-            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
-        })
+                    strokeThicknessDp =
+                        progress
 
-        rgGlassPresets.setOnCheckedChangeListener { _, checkedId ->
-            when (checkedId) {
-                R.id.rb_frosted_glass -> applyPreset(80, 20, Color.WHITE, Color.parseColor("#FF007F"), Color.parseColor("#00E5FF"), Color.parseColor("#1B162E"), 15, true)
-                R.id.rb_dark_obsidian -> applyPreset(95, 30, Color.WHITE, Color.WHITE, Color.parseColor("#111111"), Color.parseColor("#080808"), 5, true)
-                R.id.rb_tinted_neon -> applyPreset(70, 28, Color.WHITE, Color.parseColor("#FF007F"), Color.parseColor("#00E5FF"), Color.parseColor("#200515"), 20, true)
-                R.id.rb_liquid_blur -> applyPreset(30, 28, Color.WHITE, Color.parseColor("#FF4FA3"), Color.parseColor("#44FFFFFF"), Color.parseColor("#FF4FA3"), 8, true)
-                R.id.rb_liquid_no_blur -> applyPreset(85, 28, Color.WHITE, Color.parseColor("#FF007F"), Color.parseColor("#008080"), Color.parseColor("#1B162E"), 0, false)
-            }
-            sbCornerRadius.progress = cornerRadiusDp
-            sbBgOpacity.progress = bgAlphaPercent
-            sbBlurRadius.progress = blurRadiusDp
-            switchEnableBlur.isChecked = isBlurEnabled
-            updatePreview()
-        }
+                    tvStrokeThickness.text =
+                        "Stroke Thickness: ${progress}dp"
 
-        saveButton.setOnClickListener {
-            val context = requireContext()
-            val preferences = context.getSharedPreferences("tvtime_prefs", Context.MODE_PRIVATE)
-
-            // Save key aliases synchronously so all layout references find their exact color key
-            preferences.edit().apply {
-                // Font / Text Key Aliases
-                putInt("font_color", selectedFontColor)
-                putInt("text_color", selectedFontColor)
-                putInt("title_color", selectedFontColor)
-                putInt("primary_text_color", selectedFontColor)
-                putInt("item_text_color", selectedFontColor)
-
-                // Accent Key Aliases
-                putInt("accent_color", selectedAccentColor)
-                putInt("header_color", selectedAccentColor)
-                putInt("button_color", selectedAccentColor)
-                putInt("icon_color", selectedAccentColor)
-                putInt("badge_color", selectedAccentColor)
-                putInt("highlight_color", selectedAccentColor)
-
-                // Stroke / Border Key Aliases
-                putInt("stroke_color", selectedStrokeColor)
-                putInt("border_color", selectedStrokeColor)
-                putInt("outline_color", selectedStrokeColor)
-
-                // Background Key Aliases
-                putInt("bg_color", selectedBgColor)
-                putInt("background_color", selectedBgColor)
-                putInt("card_bg_color", selectedBgColor)
-
-                // Layout parameters
-                putInt("stroke_thickness", strokeThicknessDp)
-                putInt("corner_radius", cornerRadiusDp)
-                putInt("bg_opacity", bgAlphaPercent)
-                putInt("blur_radius", blurRadiusDp)
-                putBoolean("enable_blur", isBlurEnabled)
-                putBoolean("use_dynamic_color", switchDynamicColor.isChecked)
-            }.commit()
-
-            // Save visual settings to the widget-specific preferences used by the renderer
-            val widgetPrefs = WidgetPreferences(context, appWidgetId)
-            widgetPrefs.bgBlurOpacity = bgAlphaPercent
-            widgetPrefs.gaussianBlurRadius = blurRadiusDp
-            widgetPrefs.borderThickness = strokeThicknessDp
-            widgetPrefs.cornerRadius = cornerRadiusDp
-            widgetPrefs.bgHexColor = String.format("#%08X", selectedBgColor)
-            widgetPrefs.accentHexColor = String.format("#%08X", selectedAccentColor)
-            widgetPrefs.borderHexColor = String.format("#%08X", selectedStrokeColor)
-            widgetPrefs.glassPreset = when {
-                isBlurEnabled && blurRadiusDp > 0 -> GlassBitmapRenderer.PRESET_LIQUID
-                else -> GlassBitmapRenderer.PRESET_LIQUID_NOBLUR
-            }
-            val appWidgetManager = AppWidgetManager.getInstance(context)
-            val componentName = ComponentName(context, TVTimeWidgetProvider::class.java)
-            val allWidgetIds = appWidgetManager.getAppWidgetIds(componentName)
-
-            // Force widget layout refresh
-            for (id in allWidgetIds) {
-                TVTimeWidgetProvider.updateAppWidget(context, appWidgetManager, id)
-            }
-
-            // Send broadast update to the launcher host
-            val updateIntent = Intent(context, TVTimeWidgetProvider::class.java).apply {
-                action = AppWidgetManager.ACTION_APPWIDGET_UPDATE
-                putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, allWidgetIds)
-            }
-            context.sendBroadcast(updateIntent)
-
-            // Reload list views
-            try {
-                val listResId = resources.getIdentifier("widget_list_view", "id", context.packageName)
-                if (listResId != 0) {
-                    appWidgetManager.notifyAppWidgetViewDataChanged(allWidgetIds, listResId)
+                    updatePreview()
                 }
-            } catch (_: Exception) {}
 
-            val resultValue = Intent().apply {
-                putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
-            }
+                override fun onStartTrackingTouch(
+                    seekBar: SeekBar?
+                ) {
+                }
 
-            val hostActivity = activity
-            hostActivity?.setResult(Activity.RESULT_OK, resultValue)
-            hostActivity?.finish()
-        }
-    }
-
-    private fun applyPreset(
-        opacity: Int, 
-        radius: Int, 
-        fontColor: Int,
-        accentColor: Int,
-        strokeColor: Int, 
-        bgColor: Int, 
-        blurRadius: Int, 
-        blurEnabled: Boolean
-    ) {
-        bgAlphaPercent = opacity
-        cornerRadiusDp = radius
-        selectedFontColor = fontColor
-        selectedAccentColor = accentColor
-        selectedStrokeColor = strokeColor
-        selectedBgColor = bgColor
-        blurRadiusDp = blurRadius
-        isBlurEnabled = blurEnabled
-    }
-
-    private fun updatePreview() {
-        previewTitle.setTextColor(selectedFontColor)
-        previewFontBox.setBackgroundColor(selectedFontColor)
-        previewAccentBox.setBackgroundColor(selectedAccentColor)
-        previewStrokeBox.setBackgroundColor(selectedStrokeColor)
-        previewBgBox.setBackgroundColor(selectedBgColor)
-
-        tvStrokeThickness.text = "Stroke Thickness: ${strokeThicknessDp}dp"
-        tvCornerRadius.text = "Corner Radius: ${cornerRadiusDp}dp"
-        tvBgOpacity.text = "Background Opacity / Alpha: $bgAlphaPercent%"
-        tvBlurRadius.text = if (isBlurEnabled) "Blur Radius / Intensity: ${blurRadiusDp}dp" else "Blur Disabled"
-
-        val density = resources.displayMetrics.density
-        val strokePx = (strokeThicknessDp * density).toInt()
-        val cornerRadiusPx = cornerRadiusDp * density
-        val alpha255 = ((bgAlphaPercent / 100f) * 255).toInt()
-
-        val r = Color.red(selectedBgColor)
-        val g = Color.green(selectedBgColor)
-        val b = Color.blue(selectedBgColor)
-
-        val cardDrawable = GradientDrawable().apply {
-            shape = GradientDrawable.RECTANGLE
-            setColor(Color.argb(alpha255, r, g, b))
-            setCornerRadius(cornerRadiusPx)
-            if (strokePx > 0) {
-                setStroke(strokePx, selectedStrokeColor)
-            }
-        }
-
-        previewCardContainer.background = cardDrawable
-    }
-
-    private fun showHexColorPicker(title: String, currentColor: Int, onColorSelected: (Int) -> Unit) {
-        val layout = LinearLayout(requireContext()).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(40, 20, 40, 10)
-        }
-
-        val hexInput = EditText(requireContext()).apply {
-            hint = "#FF007F"
-            setText(String.format("#%06X", (0xFFFFFF and currentColor)))
-            setPadding(20, 20, 20, 20)
-        }
-
-        layout.addView(hexInput)
-
-        AlertDialog.Builder(requireContext())
-            .setTitle(title)
-            .setView(layout)
-            .setPositiveButton("Set Hex") { _, _ ->
-                try {
-                    var hexString = hexInput.text.toString().trim()
-                    if (!hexString.startsWith("#")) {
-                        hexString = "#$hexString"
-                    }
-                    val color = Color.parseColor(hexString)
-                    onColorSelected(color)
-                } catch (e: Exception) {
-                    // Invalid Hex Code, fallback silently
+                override fun onStopTrackingTouch(
+                    seekBar: SeekBar?
+                ) {
                 }
             }
-            .setNeutralButton("Presets") { _, _ ->
-                showPresetPalette(title, onColorSelected)
-            }
-            .setNegativeButton("Cancel", null)
-            .show()
-    }
-
-    private fun showPresetPalette(title: String, onColorSelected: (Int) -> Unit) {
-        val colorNames = arrayOf(
-            "Hot Pink", "Cyan", "Neon Green", "Gold / Yellow", 
-            "Orange", "Purple", "Dark Purple", "Dark Obsidian", "White", "Black"
-        )
-        val colors = arrayOf(
-            "#FF007F", "#00E5FF", "#39FF14", "#FFD700", 
-            "#FF5722", "#9C27B0", "#1B162E", "#111111", "#FFFFFF", "#000000"
         )
 
-        AlertDialog.Builder(requireContext())
-            .setTitle(title)
-            .setItems(colorNames) { _, which ->
-                val color = Color.parseColor(colors[which])
-                onColorSelected(color)
+        /*
+         * Corner radius.
+         */
+        sbCorner.setOnSeekBarChangeListener(
+            object : SeekBar.OnSeekBarChangeListener {
+
+                override fun onProgressChanged(
+                    seekBar: SeekBar?,
+                    progress: Int,
+                    fromUser: Boolean
+                ) {
+
+                    cornerRadiusDp =
+                        progress
+
+                    tvCornerRadius.text =
+                        "Corner Radius: ${progress}dp"
+
+                    updatePreview()
+                }
+
+                override fun onStartTrackingTouch(
+                    seekBar: SeekBar?
+                ) {
+                }
+
+                override fun onStopTrackingTouch(
+                    seekBar: SeekBar?
+                ) {
+                }
             }
-            .show()
-    }
-}
+        )
+
+        /*
+         * Background opacity.
+         */
+        sbOpacity.setOnSeekBarChangeListener(
+            object : SeekBar.OnSeekBarChangeListener {
+
+                override fun onProgressChanged(
+                    seekBar: SeekBar?,
+                    progress: Int,
+                    fromUser: Boolean
+                ) {
+
+                    bgAlphaPercent =
+                        progress
+
+                    tvBgOpacity.text =
+                        "Background Opacity / Alpha: $progress%"
+
+                    updatePreview()
+                }
+
+                override fun onStartTrackingTouch(
+                    seekBar: SeekBar?
+                ) {
+                }
+
+                override fun onStopTrackingTouch(
+                    seekBar: SeekBar?
+                ) {
+                }
+            }
+        )
+
+        /*
+         * Blur radius.
+         */
+        sbBlur.setOnSeekBarChangeListener(
+            object : SeekBar.OnSeekBarChangeListener {
+
+                override fun onProgressChanged(
+                    seekBar: SeekBar?,
+                    progress: Int,
+                    fromUser: Boolean
+                ) {
+
+                    blurRadiusDp =
+                        progress
+
+                    tvBlurRadius.text =
+                        if (isBlurEnabled) {
+                            "Blur Radius / Intensity: ${progress}dp"
+                        } else {
+                            "Blur Disabled"
+                        }
+
+                    updatePreview()
+                }
+
+                override fun onStartTrackingTouch(
+                    seekBar: SeekBar?
+                ) {
+                }
+
+                override fun onStopTrackingTouch(
+                    seekBar: SeekBar?
+                ) {
+                }
