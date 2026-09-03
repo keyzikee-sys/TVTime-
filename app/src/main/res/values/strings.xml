@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">TVTime</string>
+    <string name="app_name">TewbyTime</string>
     <string name="widget_description">A glassmorphism launcher widget for your favorite streaming app</string>
 </resources>

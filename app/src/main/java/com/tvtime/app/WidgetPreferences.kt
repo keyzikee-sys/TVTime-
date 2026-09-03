@@ -74,16 +74,20 @@ class WidgetPreferences(context: Context, private val widgetId: Int = DEFAULT_ID
         set(value) = putString(KEY_BG_HEX, value)
 
     var accentHexColor: String
-        get() = getString(KEY_ACCENT_HEX, "#4DD0E1")
+        get() = getString(KEY_ACCENT_HEX, "#FFFF13")
         set(value) = putString(KEY_ACCENT_HEX, value)
 
     var borderHexColor: String
-        get() = getString(KEY_BORDER_HEX, "#3303DAC5")
+        get() = getString(KEY_BORDER_HEX, "#33343B48")
         set(value) = putString(KEY_BORDER_HEX, value)
 
     var selectedServicePackage: String
         get() = getString(KEY_SERVICE, "com.tubitv")
         set(value) = putString(KEY_SERVICE, value)
+
+    var contentSource: String
+        get() = getString(KEY_CONTENT_SOURCE, CONTENT_MY_STUFF)
+        set(value) = putString(KEY_CONTENT_SOURCE, value)
 
     /** Header label shown on the widget ("My Stuff" by default). */
     var widgetTitle: String
@@ -92,13 +96,13 @@ class WidgetPreferences(context: Context, private val widgetId: Int = DEFAULT_ID
 
     /** Primary text color for the list rows on the widget. */
     var listTextColor: String
-        get() = getString(KEY_LIST_TEXT, "#FFFFFFFF")
+        get() = getString(KEY_LIST_TEXT, "#F2F4F7")
         set(value) = putString(KEY_LIST_TEXT, value)
 
     /** When true (and the device is Android 12+), the widget tints its accent + border
      * from the system wallpaper (Material You dynamic color) instead of the saved accent. */
     var useDynamicColor: Boolean
-        get() = getBoolean(KEY_DYNAMIC, true)
+        get() = getBoolean(KEY_DYNAMIC, false)
         set(value) = putBoolean(KEY_DYNAMIC, value)
 
     var currentPage: Int
@@ -145,6 +149,9 @@ class WidgetPreferences(context: Context, private val widgetId: Int = DEFAULT_ID
         private const val KEY_BORDER_HEX = "border_hex_color"
         private const val KEY_CURRENT_PAGE = "current_page"
         private const val KEY_SERVICE = "selected_service_package"
+        private const val KEY_CONTENT_SOURCE = "content_source"
+        const val CONTENT_MY_STUFF = "my_stuff"
+        const val CONTENT_TERROR_ON_TUBI = "terror_on_tubi"
         private const val KEY_DYNAMIC = "use_dynamic_color"
         private const val KEY_TITLE = "widget_title"
         private const val KEY_LIST_TEXT = "list_text_color"

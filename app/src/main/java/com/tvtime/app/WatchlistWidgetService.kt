@@ -1,6 +1,6 @@
 package com.tvtime.app
 
-import android.content.Context
+import android.appwidget.AppWidgetManager
 import android.content.Intent
 import android.graphics.Color
 import android.widget.RemoteViews
@@ -9,19 +9,32 @@ import android.widget.RemoteViewsService
 class WatchlistWidgetService : RemoteViewsService() {
 
     override fun onGetViewFactory(intent: Intent): RemoteViewsFactory {
-        WatchlistStore.init(applicationContext)
-        return WatchlistRemoteViewsFactory(applicationContext)
+        val widgetId = intent.getIntExtra(
+            AppWidgetManager.EXTRA_APPWIDGET_ID,
+            WidgetPreferences.DEFAULT_ID
+        )
+
+        val contentSource = intent.getStringExtra("content_source")
+            ?: WidgetPreferences.CONTENT_MY_STUFF
+
+        return WatchlistRemoteViewsFactory(
+            applicationContext,
+            widgetId,
+            contentSource
+        )
     }
 }
 
 class WatchlistRemoteViewsFactory(
-    private val context: Context
+    private val context: android.content.Context,
+    private val widgetId: Int,
+    private val contentSource: String
 ) : RemoteViewsService.RemoteViewsFactory {
 
     private val items = ArrayList<ShowItem>()
 
-    private var titleColor = Color.WHITE
-    private var subtitleColor = Color.parseColor("#B0BEC5")
+    private var titleColor = Color.parseColor("#FFFF13")
+    private var subtitleColor = Color.parseColor("#AEB6C2")
 
     override fun onCreate() {
         loadData()
@@ -35,51 +48,22 @@ class WatchlistRemoteViewsFactory(
         WatchlistStore.init(context)
 
         items.clear()
-        items.addAll(WatchlistStore.getMyStuff())
 
-        val prefs = context.getSharedPreferences("tvtime_prefs", Context.MODE_PRIVATE)
+        val widgetPrefs = WidgetPreferences(context, widgetId)
 
-        titleColor = getSavedColor(
-            prefs,
-            "title_color",
-            "text_color",
-            "accent_color",
-            "#00E5FF"
-        )
-
-        subtitleColor = getSavedColor(
-            prefs,
-            "subtitle_color",
-            "subtext_color",
-            "#B0BEC5"
-        )
-    }
-
-    private fun getSavedColor(
-        prefs: android.content.SharedPreferences,
-        vararg keys: String
-    ): Int {
-        val defaultColor = keys.last()
-
-        for (i in 0 until keys.size - 1) {
-            val key = keys[i]
-
-            if (prefs.contains(key)) {
-                try {
-                    return prefs.getInt(key, Color.parseColor(defaultColor))
-                } catch (_: Exception) {
-                    try {
-                        return Color.parseColor(
-                            prefs.getString(key, defaultColor)
-                                ?: defaultColor
-                        )
-                    } catch (_: Exception) {
-                    }
-                }
-            }
+        if (contentSource == WidgetPreferences.CONTENT_TERROR_ON_TUBI) {
+            items.addAll(WatchlistStore.getTerrorOnTubi())
+        } else {
+            items.addAll(WatchlistStore.getMyStuff())
         }
 
-        return Color.parseColor(defaultColor)
+        titleColor = try {
+            Color.parseColor(widgetPrefs.listTextColor)
+        } catch (_: Exception) {
+            Color.parseColor("#FFFF13")
+        }
+
+        subtitleColor = Color.parseColor("#AEB6C2")
     }
 
     override fun getCount(): Int = items.size
@@ -95,15 +79,29 @@ class WatchlistRemoteViewsFactory(
             context.packageName,
             R.layout.widget_list_item
         ).apply {
-            setTextViewText(R.id.item_title, item.title)
-            setTextColor(R.id.item_title, titleColor)
+            setTextViewText(R.id.tv_title, item.title)
+            setTextColor(R.id.tv_title, titleColor)
 
-            setTextViewText(R.id.item_subtitle, item.subtitle)
-            setTextColor(R.id.item_subtitle, subtitleColor)
+            setTextViewText(R.id.tv_sub, item.subtitle)
+            setTextColor(R.id.tv_sub, subtitleColor)
+
+            setTextViewText(
+                R.id.tv_show_description,
+                item.description
+            )
+
+            setProgressBar(
+                R.id.pb_show_progress,
+                100,
+                item.progress.coerceIn(0, 100),
+                false
+            )
 
             setOnClickFillInIntent(
-                R.id.item_container,
-                Intent()
+                R.id.widget_list_item_root,
+                Intent().apply {
+                    putExtra("watch_url", item.watchUrl)
+                }
             )
         }
     }
@@ -113,8 +111,9 @@ class WatchlistRemoteViewsFactory(
             context.packageName,
             R.layout.widget_list_item
         ).apply {
-            setTextViewText(R.id.item_title, "Loading...")
-            setTextViewText(R.id.item_subtitle, "")
+            setTextViewText(R.id.tv_title, "Loading...")
+            setTextViewText(R.id.tv_sub, "")
+            setTextViewText(R.id.tv_show_description, "")
         }
     }
 

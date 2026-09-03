@@ -2,7 +2,7 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#0F0C1B"
+    android:background="#0B0019"
     android:padding="16dp">
 
     <LinearLayout
@@ -14,7 +14,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Tubi Account"
-            android:textColor="#00F2FE"
+            android:textColor="#FFFF13"
             android:textSize="16sp"
             android:textStyle="bold"
             android:layout_marginBottom="8dp" />
@@ -48,9 +48,9 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Sign in to Tubi"
-            android:textColor="#0F0C1B"
+            android:textColor="#0B0019"
             android:textStyle="bold"
-            android:backgroundTint="#00F2FE"
+            android:backgroundTint="#FFFF13"
             android:layout_marginBottom="6dp" />
 
         <TextView
@@ -67,9 +67,9 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Sync my Tubi (continue-watching + my list)"
-            android:textColor="#0F0C1B"
+            android:textColor="#0B0019"
             android:textStyle="bold"
-            android:backgroundTint="#FF1493"
+            android:backgroundTint="#FF00A6"
             android:layout_marginBottom="6dp" />
 
         <TextView

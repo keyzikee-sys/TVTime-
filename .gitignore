@@ -1,14 +1,35 @@
 *.iml
-.gradle
+.gradle/
 *.log
 build_log.txt
 build/
+app/build/
 /local.properties
 /.idea/caches/build_file_checksums.ser
 /.idea/libraries
 /.idea/modules.xml
 /.idea/workspace.xml
 .DS_Store
-/build
-/captures
-.externalNativeBuild
+/captures/
+.externalNativeBuild/
+
+# APKs and installers
+*.apk
+*.deb
+
+# Editor/temp files
+*.swp
+*.swo
+
+# Backup/original files
+*.bak
+*.orig
+*-backup
+*-backup.*
+
+# Backup directories
+glass-backups/
+
+# Project-specific backup files
+*.dynamic-backup
+*.backup

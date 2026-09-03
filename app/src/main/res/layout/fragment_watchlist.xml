@@ -38,7 +38,7 @@
         android:layout_height="wrap_content"
         android:layout_marginBottom="10dp"
         android:text="＋ Add show"
-        android:textColor="#0F0C1B"
+        android:textColor="#0B0019"
         android:textStyle="bold"
         android:backgroundTint="#00F2FE" />
 

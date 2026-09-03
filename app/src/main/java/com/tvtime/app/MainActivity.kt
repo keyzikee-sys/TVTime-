@@ -8,40 +8,52 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         WatchlistStore.init(applicationContext)
 
-        val layoutId = resources.getIdentifier("activity_main", "layout", packageName).takeIf { it != 0 }
-            ?: android.R.layout.simple_list_item_1
-        setContentView(layoutId)
+        setContentView(R.layout.activity_main)
 
-        val containerId = resources.getIdentifier("fragment_container", "id", packageName).takeIf { it != 0 }
-            ?: resources.getIdentifier("content_frame", "id", packageName).takeIf { it != 0 }
-            ?: 0
+        val containerId = R.id.fragment_container
 
-        if (savedInstanceState == null && containerId != 0) {
-            try {
-                supportFragmentManager.beginTransaction()
-                    .replace(containerId, MyStuffFragment())
-                    .commit()
-            } catch (_: Exception) {}
+        if (savedInstanceState == null) {
+            supportFragmentManager.beginTransaction()
+                .replace(
+                    containerId,
+                    MyStuffFragment()
+                )
+                .commit()
         }
 
-        setupNav("tab_mystuff", containerId) { MyStuffFragment() }
-        setupNav("tab_syncing", containerId) { SyncingFragment() }
-        setupNav("tab_config", containerId) { WidgetConfigFragment() }
+        findViewById<View>(R.id.tab_mystuff)
+            .setOnClickListener {
+                showFragment(MyStuffFragment())
+            }
+
+        findViewById<View>(R.id.tab_syncing)
+            .setOnClickListener {
+                showFragment(SyncingFragment())
+            }
+
+        findViewById<View>(R.id.tab_config)
+            .setOnClickListener {
+                showFragment(WidgetConfigFragment())
+            }
+
+        findViewById<View>(R.id.tab_terror)
+            .setOnClickListener {
+                showFragment(TerrorOnTubiFragment())
+            }
     }
 
-    private fun setupNav(idName: String, containerId: Int, fragmentCreator: () -> androidx.fragment.app.Fragment) {
-        if (containerId == 0) return
-        val resId = resources.getIdentifier(idName, "id", packageName)
-        if (resId != 0) {
-            findViewById<View>(resId)?.setOnClickListener {
-                try {
-                    supportFragmentManager.beginTransaction()
-                        .replace(containerId, fragmentCreator())
-                        .commit()
-                } catch (_: Exception) {}
-            }
-        }
+    private fun showFragment(
+        fragment: androidx.fragment.app.Fragment
+    ) {
+        supportFragmentManager
+            .beginTransaction()
+            .replace(
+                R.id.fragment_container,
+                fragment
+            )
+            .commit()
     }
 }

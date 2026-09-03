@@ -7,9 +7,9 @@
             <corners android:radius="28dp" />
             <gradient
                 android:angle="315"
-                android:startColor="#331A233D"
-                android:centerColor="#1F0F172A"
-                android:endColor="#2B091224"
+                android:startColor="#331A0B19"
+                android:centerColor="#1F0B0019"
+                android:endColor="#2B120022"
                 android:type="linear" />
         </shape>
     </item>
@@ -34,13 +34,13 @@
         </shape>
     </item>
 
-    <!-- Layer 3: Glass Border Rim with Cyan Specular Glow -->
+    <!-- Layer 3: Glass Border Rim with Pink Specular Glow -->
     <item>
         <shape android:shape="rectangle">
             <corners android:radius="28dp" />
             <stroke
                 android:width="1.5dp"
-                android:color="#66FF1493" />
+                android:color="#66FF00A6" />
             <solid android:color="#00000000" />
         </shape>
     </item>

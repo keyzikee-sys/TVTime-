@@ -1,55 +1,97 @@
 <?xml version="1.0" encoding="utf-8"?>
+
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    android:background="@drawable/glass_background_neon">
 
+    <!-- Main app content -->
     <FrameLayout
         android:id="@+id/fragment_container"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1" />
+        android:layout_weight="1"
+        android:background="@drawable/glass_background_neon" />
 
+    <!-- Liquid Glass Bottom Navigation -->
     <LinearLayout
         android:id="@+id/bottom_tabs"
         android:layout_width="match_parent"
-        android:layout_height="56dp"
-        android:background="@color/bg_dark"
+        android:layout_height="64dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginBottom="8dp"
+        android:background="@drawable/glass_background_neon"
+        android:elevation="8dp"
+        android:gravity="center_vertical"
         android:orientation="horizontal"
-        android:weightSum="3">
+        android:padding="4dp"
+        android:weightSum="4">
 
+        <!-- My Stuff -->
         <Button
             android:id="@+id/tab_mystuff"
-            style="?android:attr/buttonBarButtonStyle"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
-            android:background="@android:color/transparent"
+            android:background="@drawable/glass_item_selector"
+            android:backgroundTint="@null"
+            android:gravity="center"
+            android:minHeight="0dp"
+            android:padding="4dp"
             android:text="My Stuff"
-            android:textColor="#FFFFFF"
-            android:textSize="13sp" />
+            android:textColor="#FF00A6"
+            android:textSize="12sp"
+            android:textStyle="bold" />
 
+        <!-- Syncing -->
         <Button
             android:id="@+id/tab_syncing"
-            style="?android:attr/buttonBarButtonStyle"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
-            android:background="@android:color/transparent"
+            android:background="@drawable/glass_item_selector"
+            android:backgroundTint="@null"
+            android:gravity="center"
+            android:minHeight="0dp"
+            android:padding="4dp"
             android:text="Syncing"
-            android:textColor="#FFFFFF"
-            android:textSize="13sp" />
+            android:textColor="#FFFF13"
+            android:textSize="12sp"
+            android:textStyle="bold" />
 
+        <!-- Widget Config -->
         <Button
             android:id="@+id/tab_config"
-            style="?android:attr/buttonBarButtonStyle"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
-            android:background="@android:color/transparent"
+            android:background="@drawable/glass_item_selector"
+            android:backgroundTint="@null"
+            android:gravity="center"
+            android:minHeight="0dp"
+            android:padding="4dp"
             android:text="Widget Config"
-            android:textColor="#FFFFFF"
-            android:textSize="13sp" />
+            android:textColor="#FF00A6"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+
+        <!-- Terror on Tubi -->
+        <Button
+            android:id="@+id/tab_terror"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:background="@drawable/glass_item_selector"
+            android:backgroundTint="@null"
+            android:gravity="center"
+            android:minHeight="0dp"
+            android:padding="4dp"
+            android:text="Terror"
+            android:textColor="#FFFF13"
+            android:textSize="12sp"
+            android:textStyle="bold" />
 
     </LinearLayout>
 

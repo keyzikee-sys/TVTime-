@@ -1,8 +1,12 @@
 package com.tvtime.app
 
 /**
- * Built-in glass style presets. Selecting a preset in the config UI applies these defaults
- * (background, accent, border colors and shape), which the user can then fine-tune.
+ * Built-in TVTime liquid-glass presets.
+ *
+ * Final brand palette:
+ * Tubi Pink  #FF00A6
+ * Tubi Broom #FFFF13
+ * Black Russian #0B0019
  */
 object GlassPresets {
 
@@ -18,24 +22,44 @@ object GlassPresets {
     )
 
     private val DEFAULTS = mapOf(
+
         GlassBitmapRenderer.PRESET_LIGHT to Preset(
-            bgHex = "#CCFFFFFF", accentHex = "#FF3700B3", borderHex = "#33FFFFFF",
-            bgBlurOpacity = 80, cornerRadius = 16, borderThickness = 2
+            bgHex = "#E60B0019",
+            accentHex = "#FF00A6",
+            borderHex = "#66FF00A6",
+            bgBlurOpacity = 78,
+            cornerRadius = 20,
+            borderThickness = 2
         ),
+
         GlassBitmapRenderer.PRESET_DARK to Preset(
-            bgHex = "#CC1E1E1E", accentHex = "#4DD0E1", borderHex = "#3303DAC5",
-            bgBlurOpacity = 85, cornerRadius = 16, borderThickness = 2
+            bgHex = "#E60B0019",
+            accentHex = "#FFFF13",
+            borderHex = "#66FFFF13",
+            bgBlurOpacity = 88,
+            cornerRadius = 20,
+            borderThickness = 2
         ),
+
         GlassBitmapRenderer.PRESET_TINTED to Preset(
-            bgHex = "#CC2A1A3A", accentHex = "#FFFF1F8F", borderHex = "#3303DAC5",
-            bgBlurOpacity = 80, cornerRadius = 18, borderThickness = 2
+            bgHex = "#E60B0019",
+            accentHex = "#FF00A6",
+            borderHex = "#66FFFF13",
+            bgBlurOpacity = 80,
+            cornerRadius = 22,
+            borderThickness = 2
         ),
+
         GlassBitmapRenderer.PRESET_LIQUID to Preset(
-            bgHex = "#CC17111F", accentHex = "#FFFF1F8F", borderHex = "#44FFFFFF",
-            bgBlurOpacity = 55, cornerRadius = 22, borderThickness = 2
+            bgHex = "#D90B0019",
+            accentHex = "#FF00A6",
+            borderHex = "#88FFFF13",
+            bgBlurOpacity = 58,
+            cornerRadius = 26,
+            borderThickness = 2
         )
     )
 
-    /** Returns the [Preset] for a given preset name, or null if unknown. */
+    /** Returns the preset for a given name, or null if unknown. */
     operator fun get(name: String): Preset? = DEFAULTS[name]
 }

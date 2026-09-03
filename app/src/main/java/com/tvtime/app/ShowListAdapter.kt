@@ -11,6 +11,7 @@ data class ShowItem(
     val title: String,
     val subtitle: String,
     val progress: Int,
+    val description: String = "",
     val imageUrl: String = "",
     val watchUrl: String = ""
 )
@@ -23,6 +24,7 @@ class ShowListAdapter(
     class ShowViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val title: TextView = view.findViewById(R.id.tv_show_title)
         val subtitle: TextView = view.findViewById(R.id.tv_show_subtitle)
+        val description: TextView = view.findViewById(R.id.tv_show_description)
         val progressLabel: TextView = view.findViewById(R.id.tv_show_progress_label)
         val progressBar: ProgressBar = view.findViewById(R.id.pb_show_progress)
         val delete: TextView = view.findViewById(R.id.tv_delete)
@@ -38,6 +40,7 @@ class ShowListAdapter(
         val item = items[position]
         holder.title.text = item.title
         holder.subtitle.text = item.subtitle
+        holder.description.text = item.description
         holder.progressLabel.text = "${item.progress}%"
         holder.progressBar.progress = item.progress
         holder.delete.setOnClickListener { onDelete(item) }

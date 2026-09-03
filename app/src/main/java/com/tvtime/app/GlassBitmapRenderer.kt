@@ -118,7 +118,7 @@ object GlassBitmapRenderer {
                     shader = LinearGradient(
                         0f, 0f,
                         widthPx.toFloat(), heightPx.toFloat() * 0.65f,
-                        0x55FFFFFF,
+                        0x22FFFFFF,
                         0x00FFFFFF,
                         Shader.TileMode.CLAMP
                     )

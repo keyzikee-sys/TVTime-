@@ -1,42 +1,51 @@
 <?xml version="1.0" encoding="utf-8"?>
+
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#121212"
     android:orientation="vertical"
+    android:background="#0B0019"
     android:padding="16dp">
 
+    <!-- Header -->
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="My Stuff"
-        android:textColor="#FFFFFF"
-        android:textSize="22sp"
+        android:textColor="#FF00A6"
+        android:textSize="24sp"
         android:textStyle="bold" />
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="6dp"
-        android:layout_marginBottom="12dp"
+        android:layout_marginBottom="16dp"
         android:text="Your saved bookmarks, library, and downloads."
-        android:textColor="#B0B0B0"
+        android:textColor="#AEB6C2"
         android:textSize="14sp" />
 
+    <!-- Glass Add Button -->
     <Button
         android:id="@+id/btn_add_mystuff"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="10dp"
-        android:text="＋ Add item"
-        android:textColor="#0F0C1B"
-        android:textStyle="bold"
-        android:backgroundTint="#00F2FE" />
+        android:layout_height="52dp"
+        android:layout_marginBottom="14dp"
+        android:background="@drawable/glass_item_selector"
+        android:backgroundTint="@null"
+        android:text="＋  ADD ITEM"
+        android:textColor="#FFFF13"
+        android:textSize="14sp"
+        android:textStyle="bold" />
 
+    <!-- Saved Items -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rv_mystuff"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:clipToPadding="false"
+        android:paddingBottom="12dp"
         android:scrollbars="vertical" />
 
 </LinearLayout>

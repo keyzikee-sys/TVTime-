@@ -11,7 +11,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="TUBI TIME (37)"
-        android:textColor="#00E5FF"
+        android:textColor="#FFFF13"
         android:textSize="18sp"
         android:textStyle="bold" />
 
@@ -37,7 +37,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="2dp"
             android:text="They Whisper"
-            android:textColor="#FFFFFF"
+            android:textColor="#F2F4F7"
             android:textSize="22sp"
             android:textStyle="bold" />
 
