@@ -77,6 +77,8 @@ async function getGoogleUser(req) {
 
 const server = http.createServer(async (req, res) => {
   try {
+    const path = new URL(req.url, "http://localhost").pathname;
+
     if (req.method === "OPTIONS") {
       res.writeHead(204, {
         "Access-Control-Allow-Origin": "*",
@@ -87,7 +89,7 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
-    if (req.method === "GET" && req.url === "/health") {
+    if (req.method === "GET" && (path === "/" || path === "/health")) {
       sendJson(res, 200, {
         success: true,
         message: "TewbyTime Backup API is running"
@@ -95,7 +97,7 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
-    if (req.method === "POST" && req.url === "/backup") {
+    if (req.method === "POST" && path === "/backup") {
       const googleUser = await getGoogleUser(req);
       const body = await readBody(req);
 
@@ -144,7 +146,7 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
-    if (req.method === "GET" && req.url === "/backup") {
+    if (req.method === "GET" && path === "/backup") {
       const googleUser = await getGoogleUser(req);
 
       const rows = await sql`
