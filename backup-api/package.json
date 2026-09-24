@@ -1,0 +1,10 @@
+{
+  "name": "tewbytime-backup-api",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@neondatabase/serverless": "^1.0.2",
+    "google-auth-library": "^9.14.1"
+  }
+}
