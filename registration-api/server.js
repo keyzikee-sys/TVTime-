@@ -111,11 +111,20 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (req.method === "GET" && req.url === "/health") {
-      sendJson(res, 200, {
-        success: true,
-        message: "TewbyTime Registration API is running"
-      });
-      return;
+  try {
+    await sql`SELECT 1`;
+    sendJson(res, 200, {
+      success: true,
+      message: "API running; database connected"
+    });
+  } catch (error) {
+    console.error("Database health check failed:", error.message);
+    sendJson(res, 500, {
+      success: false,
+      message: "Database connection failed"
+    });
+  }
+  return;
     }
 
     if (req.method === "POST" && req.url === "/register") {
